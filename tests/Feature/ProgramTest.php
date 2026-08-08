@@ -165,7 +165,9 @@ test('a user can add exercises with the searchable picker', function () {
         ->assertSet('exercises.0.exercise_name', 'Deadlift')
         ->set('exerciseToAdd', 'deadlift')
         ->assertCount('exercises', 2)
-        ->assertSee('Search exercises...');
+        ->assertSee('Search exercises...')
+        ->assertDontSee('>Unit<', escape: false)
+        ->assertSee('h-8 text-sm rounded-md', escape: false);
 });
 
 test('a user can record barbell weight as standard plates per side', function () {

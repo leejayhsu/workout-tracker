@@ -365,18 +365,16 @@ new #[Title('Log workout')] class extends Component {
                         <flux:button type="button" variant="ghost" wire:click="addSet({{ $position }})">Add set</flux:button>
                     </div>
                     <div class="mt-4 max-w-xs">
-                        <flux:field>
-                            <flux:label>Unit</flux:label>
-                            <flux:button.group class="w-fit">
-                                @foreach ([WeightUnit::Lbs, WeightUnit::Kg] as $unit)
-                                    <flux:button
-                                        type="button"
-                                        :variant="($exercises[$position]['weight_unit'] ?? WeightUnit::Kg->value) === $unit->value ? 'primary' : 'outline'"
-                                        wire:click="$set('exercises.{{ $position }}.weight_unit', '{{ $unit->value }}')"
-                                    >{{ strtoupper($unit->value) }}</flux:button>
-                                @endforeach
-                            </flux:button.group>
-                        </flux:field>
+                        <flux:button.group class="w-fit">
+                            @foreach ([WeightUnit::Lbs, WeightUnit::Kg] as $unit)
+                                <flux:button
+                                    type="button"
+                                    size="sm"
+                                    :variant="($exercises[$position]['weight_unit'] ?? WeightUnit::Kg->value) === $unit->value ? 'primary' : 'outline'"
+                                    wire:click="$set('exercises.{{ $position }}.weight_unit', '{{ $unit->value }}')"
+                                >{{ strtoupper($unit->value) }}</flux:button>
+                            @endforeach
+                        </flux:button.group>
                     </div>
                 </div>
             @endforeach
