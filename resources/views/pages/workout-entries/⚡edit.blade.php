@@ -430,7 +430,7 @@ new #[Title('Edit workout entry')] class extends Component {
                 </div>
             @endforeach
         </div>
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="grid grid-cols-2 gap-4">
             <flux:input wire:model="plateCalculatorBarWeight" type="number" min="0.01" step="0.01" label="Bar weight" />
             <flux:input value="{{ $this->calculatedPlateWeight() }}" readonly label="Total weight" />
         </div>
