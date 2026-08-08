@@ -122,16 +122,22 @@ test('a user can create a workout entry from the latest previous entry', functio
         'exercise_key' => 'deadlift',
         'exercise_name' => 'Deadlift',
         'position' => 0,
-        'sets' => 3,
-        'reps' => 5,
-        'weight' => 100,
         'weight_unit' => 'kg',
+    ]);
+    $previousEntry->exercises->first()->sets()->createMany([
+        ['position' => 0, 'reps' => 5, 'weight' => 100],
+        ['position' => 1, 'reps' => 5, 'weight' => 100],
+        ['position' => 2, 'reps' => 4, 'weight' => 105],
     ]);
 
     Livewire::actingAs($user)->test('pages::workout-entries.create', ['workout' => $workout])
         ->assertSee('data-flux-date-picker')
         ->assertSet('exercises.0.exercise_name', 'Deadlift')
-        ->assertSet('exercises.0.weight', '100.00')
+        ->assertSet('exercises.0.sets.0.weight', '100.00')
+        ->assertSet('exercises.0.sets.2.reps', 4)
+        ->call('addSet', 0)
+        ->assertSet('exercises.0.sets.3.reps', 4)
+        ->assertSet('exercises.0.sets.3.weight', '105.00')
         ->call('createEntry')
         ->assertRedirect();
 
@@ -139,7 +145,9 @@ test('a user can create a workout entry from the latest previous entry', functio
 
     expect($entry->performed_on->toDateString())->toBe(now($user->timezone)->toDateString())
         ->and($entry->exercises)->toHaveCount(1)
-        ->and($entry->exercises->first()->sets)->toBe(3);
+        ->and($entry->exercises->first()->sets)->toHaveCount(4)
+        ->and($entry->exercises->first()->sets->last()->reps)->toBe(4)
+        ->and($entry->exercises->first()->sets->last()->weight)->toBe('105.00');
 
     Livewire::actingAs($user)->test('pages::workout-entries.edit', ['workoutEntry' => $entry])
         ->assertSee('data-flux-date-picker');
@@ -168,26 +176,49 @@ test('a user can record barbell weight as standard plates per side', function ()
     Livewire::actingAs($user)->test('pages::workout-entries.create', ['workout' => $workout])
         ->set('exerciseToAdd', 'barbell_bench_press')
         ->set('exercises.0.weight_unit', 'lbs')
-        ->assertSet('exercises.0.bar_weight', '45')
-        ->set('exercises.0.weight_mode', 'plates')
-        ->assertSee('Tap a plate to add it to one side of the bar.')
-        ->assertSee('45 LBS')
-        ->call('incrementPlate', 0, '45')
-        ->call('incrementPlate', 0, '25')
-        ->call('decrementPlate', 0, '25')
-        ->assertSet('exercises.0.plate_counts.45', 1)
-        ->assertSet('exercises.0.plate_counts.25', 0)
-        ->set('exercises.0.bar_weight', '45')
-        ->set('exercises.0.plate_counts', ['45' => 1, '25' => 1, '5' => 1])
+        ->call('addSet', 0)
+        ->set('exercises.0.sets.0.reps', 5)
+        ->call('openPlateCalculator', 0, 0)
+        ->assertSet('plateCalculatorBarWeight', '45')
+        ->call('incrementPlate', '45')
+        ->call('incrementPlate', '25')
+        ->call('decrementPlate', '25')
+        ->assertSet('plateCalculatorCounts.45', 1)
+        ->assertSet('plateCalculatorCounts.25', 0)
+        ->set('plateCalculatorCounts', ['45' => 1, '25' => 1, '5' => 1])
+        ->call('applyPlateWeight')
+        ->assertSet('exercises.0.sets.0.weight', '195.00')
+        ->call('addSet', 0)
+        ->set('exercises.0.sets.1.reps', 4)
         ->call('createEntry')
         ->assertRedirect();
 
     $exercise = $workout->entries()->latest('id')->firstOrFail()->exercises->firstOrFail();
 
-    expect($exercise->weight)->toBe('195.00')
-        ->and($exercise->weight_mode)->toBe('plates')
-        ->and($exercise->bar_weight)->toBe('45.00')
-        ->and($exercise->plate_counts)->toBe(['45' => 1, '25' => 1, '5' => 1]);
+    expect($exercise->sets)->toHaveCount(2)
+        ->and($exercise->sets[0]->weight)->toBe('195.00')
+        ->and($exercise->sets[1]->weight)->toBe('195.00');
+});
+
+test('a user can record different reps and weight for each set', function () {
+    $user = User::factory()->create();
+    $program = $user->programs()->create(['name' => 'Strength']);
+    $workout = $program->workouts()->create(['label' => 'A', 'position' => 0]);
+
+    Livewire::actingAs($user)->test('pages::workout-entries.create', ['workout' => $workout])
+        ->set('exerciseToAdd', 'deadlift')
+        ->call('addSet', 0)
+        ->set('exercises.0.sets.0.reps', 5)
+        ->set('exercises.0.sets.0.weight', 100)
+        ->call('addSet', 0)
+        ->set('exercises.0.sets.1.reps', 3)
+        ->set('exercises.0.sets.1.weight', 110)
+        ->call('createEntry');
+
+    $sets = $workout->entries()->latest('id')->firstOrFail()->exercises->firstOrFail()->sets;
+
+    expect($sets->map(fn ($set): array => [$set->reps, $set->weight])->all())
+        ->toBe([[5, '100.00'], [3, '110.00']]);
 });
 
 test('users cannot access another users workout entries', function () {

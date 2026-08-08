@@ -7,6 +7,7 @@ use Database\Factories\WorkoutEntryExerciseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WorkoutEntryExercise extends Model
 {
@@ -14,17 +15,13 @@ class WorkoutEntryExercise extends Model
     use HasFactory;
 
     protected $fillable = [
-        'exercise_key', 'exercise_name', 'position', 'sets', 'reps', 'weight', 'weight_unit',
-        'weight_mode', 'bar_weight', 'plate_counts',
+        'exercise_key', 'exercise_name', 'position', 'weight_unit',
     ];
 
     protected function casts(): array
     {
         return [
-            'weight' => 'decimal:2',
             'weight_unit' => WeightUnit::class,
-            'bar_weight' => 'decimal:2',
-            'plate_counts' => 'array',
         ];
     }
 
@@ -32,5 +29,11 @@ class WorkoutEntryExercise extends Model
     public function workoutEntry(): BelongsTo
     {
         return $this->belongsTo(WorkoutEntry::class);
+    }
+
+    /** @return HasMany<WorkoutEntryExerciseSet, $this> */
+    public function sets(): HasMany
+    {
+        return $this->hasMany(WorkoutEntryExerciseSet::class)->orderBy('position');
     }
 }

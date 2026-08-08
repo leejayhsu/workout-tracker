@@ -14,6 +14,12 @@ new #[Title('Log workout')] class extends Component {
     public string $performedOn = '';
     public string $notes = '';
     public ?string $exerciseToAdd = null;
+    public ?int $plateCalculatorPosition = null;
+    public ?int $plateCalculatorSetPosition = null;
+    public string $plateCalculatorBarWeight = '';
+
+    /** @var array<string, int> */
+    public array $plateCalculatorCounts = [];
 
     /** @var array<int, array<string, mixed>> */
     public array $exercises = [];
@@ -64,38 +70,47 @@ new #[Title('Log workout')] class extends Component {
         return $unit === WeightUnit::Lbs->value ? '45' : '20';
     }
 
-    public function updatedExercises(mixed $value, string $key): void
+    public function openPlateCalculator(int $position, int $setPosition): void
     {
-        $position = (int) (string) str($key)->before('.');
+        $this->plateCalculatorPosition = $position;
+        $this->plateCalculatorSetPosition = $setPosition;
+        $this->plateCalculatorBarWeight = $this->defaultBarWeight((string) ($this->exercises[$position]['weight_unit'] ?? WeightUnit::Kg->value));
+        $this->plateCalculatorCounts = [];
+        $this->modal('plate-calculator')->show();
+    }
 
-        if (str_ends_with($key, '.weight_mode') && $value === 'plates' && blank($this->exercises[$position]['bar_weight'] ?? null)) {
-            $this->exercises[$position]['bar_weight'] = $this->defaultBarWeight((string) ($this->exercises[$position]['weight_unit'] ?? WeightUnit::Lbs->value));
-        }
+    public function incrementPlate(string $plate): void
+    {
+        $this->plateCalculatorCounts[$plate] = (int) ($this->plateCalculatorCounts[$plate] ?? 0) + 1;
+    }
 
-        if (! str_ends_with($key, '.weight_unit')) {
+    public function decrementPlate(string $plate): void
+    {
+        $count = (int) ($this->plateCalculatorCounts[$plate] ?? 0);
+        $this->plateCalculatorCounts[$plate] = max(0, $count - 1);
+    }
+
+    public function calculatedPlateWeight(): string
+    {
+        $plateWeight = collect($this->plateCalculatorCounts)
+            ->sum(fn (int|string $count, string $plate): float => (float) str_replace('_', '.', $plate) * $count);
+
+        return number_format(((float) $this->plateCalculatorBarWeight) + ($plateWeight * 2), 2);
+    }
+
+    public function applyPlateWeight(): void
+    {
+        $this->validate([
+            'plateCalculatorBarWeight' => ['required', 'numeric', 'gt:0'],
+            'plateCalculatorCounts.*' => ['integer', 'min:0'],
+        ]);
+
+        if ($this->plateCalculatorPosition === null || $this->plateCalculatorSetPosition === null) {
             return;
         }
 
-        $this->exercises[$position]['bar_weight'] = $this->defaultBarWeight((string) $value);
-    }
-
-    public function incrementPlate(int $position, string $plate): void
-    {
-        $this->exercises[$position]['plate_counts'][$plate] = (int) ($this->exercises[$position]['plate_counts'][$plate] ?? 0) + 1;
-    }
-
-    public function decrementPlate(int $position, string $plate): void
-    {
-        $count = (int) ($this->exercises[$position]['plate_counts'][$plate] ?? 0);
-        $this->exercises[$position]['plate_counts'][$plate] = max(0, $count - 1);
-    }
-
-    public function calculatedPlateWeight(array $exercise): string
-    {
-        $plateWeight = collect($exercise['plate_counts'] ?? [])
-            ->sum(fn (int|string $count, string $plate): float => (float) str_replace('_', '.', $plate) * $count);
-
-        return number_format(((float) ($exercise['bar_weight'] ?? 0)) + ($plateWeight * 2), 2);
+        $this->exercises[$this->plateCalculatorPosition]['sets'][$this->plateCalculatorSetPosition]['weight'] = $this->calculatedPlateWeight();
+        $this->modal('plate-calculator')->close();
     }
 
     public function mount(Workout $workout): void
@@ -109,18 +124,18 @@ new #[Title('Log workout')] class extends Component {
             ->whereDate('performed_on', '<=', $this->performedOn)
             ->latest('performed_on')
             ->latest('id')
-            ->with('exercises')
+            ->with('exercises.sets')
             ->first();
 
         $this->exercises = $previousEntry?->exercises->map(function ($exercise): array {
             return [...$exercise->only([
-                'exercise_key', 'exercise_name', 'position', 'sets', 'reps', 'weight', 'weight_unit',
-                'weight_mode', 'bar_weight', 'plate_counts',
+                'exercise_key', 'exercise_name', 'position', 'weight_unit',
             ]),
+                'sets' => $exercise->sets->map(fn ($set): array => [
+                    'reps' => $set->reps,
+                    'weight' => $set->weight,
+                ])->all(),
                 'weight_unit' => $exercise->weight_unit?->value,
-                'weight_mode' => $exercise->weight_mode ?: 'total',
-                'bar_weight' => $exercise->bar_weight,
-                'plate_counts' => $exercise->plate_counts ?: [],
             ];
         })->all() ?? [];
     }
@@ -137,14 +152,23 @@ new #[Title('Log workout')] class extends Component {
             'exercise_key' => $exercise->value,
             'exercise_name' => $exercise->label(),
             'position' => count($this->exercises),
-            'sets' => 0,
-            'reps' => 0,
-            'weight' => null,
+            'sets' => [],
             'weight_unit' => WeightUnit::Kg->value,
-            'weight_mode' => 'total',
-            'bar_weight' => $this->defaultBarWeight(WeightUnit::Kg->value),
-            'plate_counts' => [],
         ];
+    }
+
+    public function addSet(int $position): void
+    {
+        $sets = $this->exercises[$position]['sets'];
+        $previousSet = $sets[array_key_last($sets)] ?? ['reps' => 0, 'weight' => null];
+
+        $this->exercises[$position]['sets'][] = $previousSet;
+    }
+
+    public function removeSet(int $position, int $setPosition): void
+    {
+        unset($this->exercises[$position]['sets'][$setPosition]);
+        $this->exercises[$position]['sets'] = array_values($this->exercises[$position]['sets']);
     }
 
     public function updatedExerciseToAdd(?string $exerciseKey): void
@@ -171,26 +195,11 @@ new #[Title('Log workout')] class extends Component {
             'exercises' => ['array'],
             'exercises.*.exercise_key' => ['required', 'string'],
             'exercises.*.exercise_name' => ['required', 'string'],
-            'exercises.*.sets' => ['required', 'integer', 'min:0'],
-            'exercises.*.reps' => ['required', 'integer', 'min:0'],
-            'exercises.*.weight' => ['nullable', 'numeric', 'gt:0'],
+            'exercises.*.sets' => ['array'],
+            'exercises.*.sets.*.reps' => ['required', 'integer', 'min:0'],
+            'exercises.*.sets.*.weight' => ['nullable', 'numeric', 'gt:0'],
             'exercises.*.weight_unit' => ['nullable', 'in:kg,lbs'],
-            'exercises.*.weight_mode' => ['required', 'in:total,plates'],
-            'exercises.*.bar_weight' => ['nullable', 'numeric', 'gt:0'],
-            'exercises.*.plate_counts' => ['array'],
-            'exercises.*.plate_counts.*' => ['integer', 'min:0'],
         ]);
-
-        foreach ($validated['exercises'] as &$exercise) {
-            if ($exercise['weight_mode'] !== 'plates') {
-                continue;
-            }
-
-            $plateWeight = collect($exercise['plate_counts'] ?? [])
-                ->sum(fn (int|string $count, string $plate): float => (float) str_replace('_', '.', $plate) * $count);
-            $exercise['weight'] = round((float) $exercise['bar_weight'] + ($plateWeight * 2), 2);
-        }
-        unset($exercise);
 
         $entry = DB::transaction(function () use ($validated): \App\Models\WorkoutEntry {
             $entry = Auth::user()->workoutEntries()->create([
@@ -200,7 +209,14 @@ new #[Title('Log workout')] class extends Component {
             ]);
 
             foreach ($validated['exercises'] as $position => $exercise) {
-                $entry->exercises()->create([...$exercise, 'position' => $position]);
+                $sets = $exercise['sets'];
+                unset($exercise['sets']);
+                $entryExercise = $entry->exercises()->create([...$exercise, 'position' => $position]);
+                $entryExercise->sets()->createMany(array_map(
+                    fn (array $set, int $setPosition): array => [...$set, 'position' => $setPosition],
+                    $sets,
+                    array_keys($sets),
+                ));
             }
 
             return $entry;
@@ -210,6 +226,7 @@ new #[Title('Log workout')] class extends Component {
     }
 }; ?>
 
+<div>
 <section class="w-full">
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-8">
         <div>
@@ -230,65 +247,26 @@ new #[Title('Log workout')] class extends Component {
                         <flux:heading>{{ $exercise['exercise_name'] }}</flux:heading>
                         <flux:button type="button" variant="ghost" wire:click="removeExercise({{ $position }})">Remove</flux:button>
                     </div>
-                    <div class="mt-4 grid gap-4 sm:grid-cols-4">
-                        <flux:input wire:model="exercises.{{ $position }}.sets" type="number" min="0" label="Sets" />
-                        <flux:input wire:model="exercises.{{ $position }}.reps" type="number" min="0" label="Reps" />
-                        <flux:select wire:model.live="exercises.{{ $position }}.weight_mode" label="Enter weight as">
-                            <flux:select.option value="total">Total weight</flux:select.option>
-                            <flux:select.option value="plates">Plates per side</flux:select.option>
-                        </flux:select>
+                    <div class="mt-4 flex flex-col gap-3">
+                        @foreach ($exercise['sets'] as $setPosition => $set)
+                            <div wire:key="set-{{ $position }}-{{ $setPosition }}" class="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto_auto]">
+                                <flux:input wire:model="exercises.{{ $position }}.sets.{{ $setPosition }}.reps" type="number" min="0" label="Set {{ $setPosition + 1 }} reps" />
+                                <flux:input wire:model="exercises.{{ $position }}.sets.{{ $setPosition }}.weight" type="number" min="0.01" step="0.01" label="Weight" />
+                                <flux:modal.trigger name="plate-calculator">
+                                    <flux:button type="button" variant="ghost" wire:click="openPlateCalculator({{ $position }}, {{ $setPosition }})">Plates</flux:button>
+                                </flux:modal.trigger>
+                                <flux:button type="button" variant="ghost" wire:click="removeSet({{ $position }}, {{ $setPosition }})">Remove</flux:button>
+                            </div>
+                        @endforeach
+                        <flux:button type="button" variant="ghost" wire:click="addSet({{ $position }})">Add set</flux:button>
+                    </div>
+                    <div class="mt-4 max-w-xs">
                         <flux:select wire:model="exercises.{{ $position }}.weight_unit" label="Unit">
                             @foreach (WeightUnit::cases() as $unit)
                                 <flux:select.option value="{{ $unit->value }}">{{ strtoupper($unit->value) }}</flux:select.option>
                             @endforeach
                         </flux:select>
                     </div>
-                    @if ($exercise['weight_mode'] === 'plates')
-                        <div class="mt-4 rounded-lg bg-zinc-100 p-4 dark:bg-zinc-800">
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <flux:input wire:model="exercises.{{ $position }}.bar_weight" type="number" min="0.01" step="0.01" label="Bar weight" />
-                                <flux:input value="{{ $this->calculatedPlateWeight($exercise) }}" readonly label="Total weight" />
-                            </div>
-                            <flux:text class="mt-3">Tap a plate to add it to one side of the bar.</flux:text>
-                            <div class="mt-3 overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-                                @php $hasPlates = collect($exercise['plate_counts'] ?? [])->sum() > 0; @endphp
-                                <div class="relative flex h-36 items-center justify-center overflow-hidden bg-zinc-100 px-4 dark:bg-zinc-950">
-                                    <div class="absolute h-3 w-1/2 rounded-full bg-zinc-600 shadow-inner dark:bg-zinc-800"></div>
-                                    <div class="relative flex h-28 items-center gap-1">
-                                        @if ($hasPlates)
-                                            @foreach ($this->plateOptions($exercise['weight_unit']) as $plateKey => $plate)
-                                                @php $count = (int) ($exercise['plate_counts'][$plateKey] ?? 0); @endphp
-                                                @for ($plateIndex = 0; $plateIndex < min(8, $count); $plateIndex++)
-                                                    <span class="{{ $this->plateHeight($plate) }} {{ $this->plateThickness($plate) }} rounded-lg {{ $this->plateColor($plate) }} shadow-sm" title="{{ $plate }} {{ strtoupper($exercise['weight_unit']) }}"></span>
-                                                @endfor
-                                            @endforeach
-                                        @else
-                                            @for ($plateIndex = 0; $plateIndex < 3; $plateIndex++)
-                                                <span class="h-24 w-3 rounded-md border-2 border-dashed border-indigo-400 opacity-50"></span>
-                                            @endfor
-                                        @endif
-                                    </div>
-                                </div>
-                                <div class="-mx-px flex snap-x gap-2 overflow-x-auto border-t border-zinc-200 p-3 sm:justify-center dark:border-zinc-700">
-                                    @foreach ($this->plateOptions($exercise['weight_unit']) as $plateKey => $plate)
-                                        @php $count = (int) ($exercise['plate_counts'][$plateKey] ?? 0); @endphp
-                                        <div wire:key="plate-{{ $position }}-{{ $plateKey }}" class="relative flex shrink-0 snap-start flex-col items-center gap-1">
-                                            <button type="button" wire:click="incrementPlate({{ $position }}, '{{ $plateKey }}')" class="{{ $this->plateColor($plate) }} relative flex h-20 w-16 flex-col items-center justify-end rounded-xl pb-2 font-semibold shadow-sm transition active:scale-95" aria-label="Add {{ $plate }} {{ strtoupper($exercise['weight_unit']) }} plate">
-                                                <span class="absolute left-1/2 top-2 flex size-7 -translate-x-1/2 items-center justify-center rounded-full bg-black/20 text-sm text-white">+</span>
-                                                <span class="text-lg leading-none">{{ $plate }}</span>
-                                                <span class="text-[10px] uppercase opacity-75">{{ $exercise['weight_unit'] }}</span>
-                                            </button>
-                                            <flux:button type="button" size="sm" square icon="minus" variant="ghost" wire:click="decrementPlate({{ $position }}, '{{ $plateKey }}')" aria-label="Remove {{ $plate }} {{ strtoupper($exercise['weight_unit']) }} plate" />
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <div class="mt-4">
-                            <flux:input wire:model="exercises.{{ $position }}.weight" type="number" min="0.01" step="0.01" label="Total weight" />
-                        </div>
-                    @endif
                 </div>
             @endforeach
 
@@ -310,3 +288,51 @@ new #[Title('Log workout')] class extends Component {
         </form>
     </div>
 </section>
+
+<flux:modal name="plate-calculator" flyout position="bottom" variant="floating" class="max-w-xl">
+    <div class="flex flex-col gap-6">
+        <div>
+            <flux:heading size="lg">Calculate plate weight</flux:heading>
+        </div>
+        @php $hasPlates = collect($plateCalculatorCounts)->sum() > 0; @endphp
+        <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="relative flex h-36 items-center justify-center overflow-hidden bg-zinc-100 px-4 dark:bg-zinc-950">
+                <div class="absolute h-3 w-1/2 rounded-full bg-zinc-600 shadow-inner dark:bg-zinc-800"></div>
+                <div class="relative flex h-28 items-center gap-1">
+                    @if ($hasPlates)
+                        @foreach ($this->plateOptions($plateCalculatorPosition !== null ? ($exercises[$plateCalculatorPosition]['weight_unit'] ?? WeightUnit::Kg->value) : WeightUnit::Kg->value) as $plateKey => $plate)
+                            @php $count = (int) ($plateCalculatorCounts[$plateKey] ?? 0); @endphp
+                            @for ($plateIndex = 0; $plateIndex < min(8, $count); $plateIndex++)
+                                <span class="{{ $this->plateHeight($plate) }} {{ $this->plateThickness($plate) }} rounded-lg {{ $this->plateColor($plate) }} shadow-sm" title="{{ $plate }} plate"></span>
+                            @endfor
+                        @endforeach
+                    @else
+                        @for ($plateIndex = 0; $plateIndex < 3; $plateIndex++)
+                            <span class="h-24 w-3 rounded-md border-2 border-dashed border-indigo-400 opacity-50"></span>
+                        @endfor
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-wrap justify-center gap-2">
+            @foreach ($this->plateOptions($plateCalculatorPosition !== null ? ($exercises[$plateCalculatorPosition]['weight_unit'] ?? WeightUnit::Kg->value) : WeightUnit::Kg->value) as $plateKey => $plate)
+                <div wire:key="calculator-plate-{{ $plateKey }}" class="flex flex-col items-center gap-1">
+                    <button type="button" wire:click="incrementPlate('{{ $plateKey }}')" class="{{ $this->plateColor($plate) }} relative flex h-20 w-16 flex-col items-center justify-end rounded-xl pb-2 font-semibold shadow-sm transition active:scale-95" aria-label="Add {{ $plate }} plate">
+                        <span class="absolute left-1/2 top-2 flex size-7 -translate-x-1/2 items-center justify-center rounded-full bg-black/20 text-sm text-white">+</span>
+                        <span class="text-lg leading-none">{{ $plate }}</span>
+                    </button>
+                    <flux:button type="button" size="sm" square icon="minus" variant="ghost" wire:click="decrementPlate('{{ $plateKey }}')" aria-label="Remove {{ $plate }} plate" />
+                </div>
+            @endforeach
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+            <flux:input wire:model="plateCalculatorBarWeight" type="number" min="0.01" step="0.01" label="Bar weight" />
+            <flux:input value="{{ $this->calculatedPlateWeight() }}" readonly label="Total weight" />
+        </div>
+        <div class="flex justify-end gap-2">
+            <flux:modal.close><flux:button variant="ghost">Cancel</flux:button></flux:modal.close>
+            <flux:button type="button" variant="primary" wire:click="applyPlateWeight">Use this weight</flux:button>
+        </div>
+    </div>
+</flux:modal>
+</div>
