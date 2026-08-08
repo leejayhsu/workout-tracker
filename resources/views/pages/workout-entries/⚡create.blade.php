@@ -274,17 +274,19 @@ new #[Title('Log workout')] class extends Component {
                 <div class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
                     <div class="flex items-start justify-between gap-4">
                         <flux:heading>{{ $exercise['exercise_name'] }}</flux:heading>
-                        <flux:button type="button" variant="ghost" wire:click="removeExercise({{ $position }})">Remove</flux:button>
+                        <flux:button type="button" variant="ghost" square icon="x-mark" class="text-red-600 dark:text-red-400" wire:click="removeExercise({{ $position }})" aria-label="Remove exercise" />
                     </div>
                     <div class="mt-4 flex flex-col gap-3">
                         @foreach ($exercise['sets'] as $setPosition => $set)
-                            <div wire:key="set-{{ $position }}-{{ $setPosition }}" class="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto_auto]">
+                            <div wire:key="set-{{ $position }}-{{ $setPosition }}" class="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto] items-end gap-3">
                                 <flux:input wire:model="exercises.{{ $position }}.sets.{{ $setPosition }}.reps" type="number" min="0" label="Set {{ $setPosition + 1 }} reps" />
                                 <flux:input wire:model="exercises.{{ $position }}.sets.{{ $setPosition }}.weight" type="number" min="0.01" step="0.01" label="Weight" />
                                 <flux:modal.trigger name="plate-calculator">
-                                    <flux:button type="button" variant="ghost" wire:click="openPlateCalculator({{ $position }}, {{ $setPosition }})">Plates</flux:button>
+                                    <flux:button type="button" variant="ghost" square wire:click="openPlateCalculator({{ $position }}, {{ $setPosition }})" aria-label="Calculate plates">
+                                        <flux:icon.circle-stack />
+                                    </flux:button>
                                 </flux:modal.trigger>
-                                <flux:button type="button" variant="ghost" wire:click="removeSet({{ $position }}, {{ $setPosition }})">Remove</flux:button>
+                                <flux:button type="button" variant="ghost" square icon="x-mark" class="text-red-600 dark:text-red-400" wire:click="removeSet({{ $position }}, {{ $setPosition }})" aria-label="Remove set" />
                             </div>
                         @endforeach
                         <flux:button type="button" variant="ghost" wire:click="addSet({{ $position }})">Add set</flux:button>
