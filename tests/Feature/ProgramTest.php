@@ -261,3 +261,48 @@ test('users cannot access another users workout entries', function () {
     Livewire::actingAs($otherUser)->test('pages::workout-entries.edit', ['workoutEntry' => $entry])
         ->assertStatus(404);
 });
+
+test('users cannot access another users program workouts', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $program = $owner->programs()->create(['name' => 'Private']);
+
+    Livewire::actingAs($otherUser)->test('pages::workouts.index', ['program' => $program])
+        ->assertStatus(404);
+});
+
+test('users cannot create entries for another users workouts', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $program = $owner->programs()->create(['name' => 'Private']);
+    $workout = $program->workouts()->create(['label' => 'A', 'position' => 0]);
+
+    Livewire::actingAs($otherUser)->test('pages::workout-entries.create', ['workout' => $workout])
+        ->assertStatus(404);
+});
+
+test('users cannot invoke activity lookup for another users program', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $program = $owner->programs()->create(['name' => 'Private']);
+
+    Livewire::actingAs($otherUser)->test('pages::programs.index')
+        ->call('activityFor', $program)
+        ->assertStatus(404);
+});
+
+test('workout pages do not show entries owned by another user', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $program = $owner->programs()->create(['name' => 'Strength']);
+    $workout = $program->workouts()->create(['label' => 'A', 'position' => 0]);
+    $otherEntry = $otherUser->workoutEntries()->create([
+        'workout_id' => $workout->id,
+        'performed_on' => now()->toDateString(),
+        'notes' => 'Private note',
+    ]);
+
+    Livewire::actingAs($owner)->test('pages::workouts.index', ['program' => $program])
+        ->assertDontSee($otherEntry->performed_on->format('M j, Y'))
+        ->assertDontSee('Private note');
+});

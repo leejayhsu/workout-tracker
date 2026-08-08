@@ -193,12 +193,16 @@ new #[Title('Edit workout entry')] class extends Component {
 
     public function mount(WorkoutEntry $workoutEntry): void
     {
-        abort_unless($workoutEntry->user_id === Auth::id(), 404);
+        $ownedEntry = Auth::user()->workoutEntries()
+            ->whereKey($workoutEntry->getKey())
+            ->with('workout.program', 'exercises.sets')
+            ->first();
+        abort_unless($ownedEntry, 404);
 
-        $this->entry = $workoutEntry->load('workout.program', 'exercises.sets');
-        $this->performedOn = $workoutEntry->performed_on->toDateString();
-        $this->notes = $workoutEntry->notes ?? '';
-        $this->exercises = $workoutEntry->exercises->map(function ($exercise): array {
+        $this->entry = $ownedEntry;
+        $this->performedOn = $this->entry->performed_on->toDateString();
+        $this->notes = $this->entry->notes ?? '';
+        $this->exercises = $this->entry->exercises->map(function ($exercise): array {
             return [...$exercise->only([
                 'exercise_key', 'exercise_name', 'position', 'weight_unit',
             ]),
@@ -209,6 +213,17 @@ new #[Title('Edit workout entry')] class extends Component {
                 'weight_unit' => $exercise->weight_unit?->value,
             ];
         })->all();
+    }
+
+    private function ownedEntry(): WorkoutEntry
+    {
+        $entry = Auth::user()->workoutEntries()
+            ->whereKey($this->entry->getKey())
+            ->with('workout.program')
+            ->first();
+        abort_unless($entry, 404);
+
+        return $entry;
     }
 
     public function addExercise(string $exerciseKey): void
@@ -260,6 +275,7 @@ new #[Title('Edit workout entry')] class extends Component {
 
     public function saveEntry(): void
     {
+        $entry = $this->ownedEntry();
         $validated = $this->validate([
             'performedOn' => ['required', 'date', 'before_or_equal:today'],
             'notes' => ['nullable', 'string'],
@@ -272,16 +288,16 @@ new #[Title('Edit workout entry')] class extends Component {
             'exercises.*.weight_unit' => ['nullable', 'in:kg,lbs'],
         ]);
 
-        $this->entry->update([
+        $entry->update([
             'performed_on' => $validated['performedOn'],
             'notes' => $validated['notes'] ?: null,
         ]);
-        $this->entry->exercises()->delete();
+        $entry->exercises()->delete();
 
         foreach ($validated['exercises'] as $position => $exercise) {
             $sets = $exercise['sets'];
             unset($exercise['sets']);
-            $entryExercise = $this->entry->exercises()->create([...$exercise, 'position' => $position]);
+            $entryExercise = $entry->exercises()->create([...$exercise, 'position' => $position]);
             $entryExercise->sets()->createMany(array_map(
                 fn (array $set, int $setPosition): array => [...$set, 'position' => $setPosition],
                 $sets,
@@ -289,13 +305,14 @@ new #[Title('Edit workout entry')] class extends Component {
             ));
         }
 
-        $this->redirect(route('workouts.index', [$this->entry->workout->program, 'workoutId' => $this->entry->workout_id], absolute: false), navigate: true);
+        $this->redirect(route('workouts.index', [$entry->workout->program, 'workoutId' => $entry->workout_id], absolute: false), navigate: true);
     }
 
     public function deleteEntry(): void
     {
-        $program = $this->entry->workout->program;
-        $this->entry->delete();
+        $entry = $this->ownedEntry();
+        $program = $entry->workout->program;
+        $entry->delete();
 
         $this->redirect(route('workouts.index', $program, absolute: false), navigate: true);
     }

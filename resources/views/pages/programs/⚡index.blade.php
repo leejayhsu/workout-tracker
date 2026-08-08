@@ -28,6 +28,13 @@ new #[Title('Programs')] class extends Component {
     /** @return array<int, array{date: Carbon, entry: ?\App\Models\WorkoutEntry, label: ?string}> */
     public function activityFor(Program $program): array
     {
+        $program = Auth::user()->programs()
+            ->whereKey($program->getKey())
+            ->with([
+                'workouts.entries' => fn ($query) => $query->whereBelongsTo(Auth::user()),
+            ])
+            ->first();
+        abort_unless($program, 404);
         $today = today(Auth::user()->timezone);
         $entries = $program->workouts->flatMap(fn ($workout) => $workout->entries->map(
             fn ($entry) => ['entry' => $entry, 'label' => $workout->label],

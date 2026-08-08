@@ -22,11 +22,25 @@ new #[Title('Workouts')] class extends Component {
 
     public function mount(Program $program): void
     {
-        abort_unless($program->user_id === Auth::id(), 404);
+        $ownedProgram = Auth::user()->programs()
+            ->whereKey($program->getKey())
+            ->with([
+                'workouts.entries' => fn ($query) => $query->whereBelongsTo(Auth::user()),
+            ])
+            ->first();
+        abort_unless($ownedProgram, 404);
 
-        $this->program = $program->load('workouts.entries');
-        $this->programName = $program->name;
-        $this->workoutId ??= $program->workouts()->value('id');
+        $this->program = $ownedProgram;
+        $this->programName = $this->program->name;
+        $this->workoutId ??= $this->program->workouts()->value('id');
+    }
+
+    private function ownedProgram(): Program
+    {
+        $program = Auth::user()->programs()->whereKey($this->program->getKey())->first();
+        abort_unless($program, 404);
+
+        return $program;
     }
 
     public function editProgram(): void
@@ -41,14 +55,17 @@ new #[Title('Workouts')] class extends Component {
             'programName' => ['required', 'string', 'max:255'],
         ]);
 
-        $this->program->update(['name' => $validated['programName']]);
-        $this->program->refresh()->load('workouts.entries');
+        $program = $this->ownedProgram();
+        $program->update(['name' => $validated['programName']]);
+        $this->program = $program->load([
+            'workouts.entries' => fn ($query) => $query->whereBelongsTo(Auth::user()),
+        ]);
         $this->editingProgram = false;
     }
 
     public function editWorkout(int $workoutId): void
     {
-        $workout = $this->program->workouts()->findOrFail($workoutId);
+        $workout = $this->ownedProgram()->workouts()->findOrFail($workoutId);
 
         $this->editingWorkoutId = $workout->id;
         $this->workoutName = $workout->name ?? '';
@@ -60,9 +77,12 @@ new #[Title('Workouts')] class extends Component {
             'workoutName' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $workout = $this->program->workouts()->findOrFail($this->editingWorkoutId);
+        $program = $this->ownedProgram();
+        $workout = $program->workouts()->findOrFail($this->editingWorkoutId);
         $workout->update(['name' => filled($validated['workoutName']) ? $validated['workoutName'] : null]);
-        $this->program->refresh()->load('workouts.entries');
+        $this->program = $program->load([
+            'workouts.entries' => fn ($query) => $query->whereBelongsTo(Auth::user()),
+        ]);
         $this->editingWorkoutId = null;
     }
 

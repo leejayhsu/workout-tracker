@@ -195,12 +195,11 @@ new #[Title('Log workout')] class extends Component {
 
     public function mount(Workout $workout): void
     {
-        abort_unless($workout->program->user_id === Auth::id(), 404);
-
-        $this->workout = $workout;
+        $this->workout = $this->ownedWorkout($workout);
         $this->performedOn = now(Auth::user()->timezone)->toDateString();
 
-        $previousEntry = $workout->entries()
+        $previousEntry = Auth::user()->workoutEntries()
+            ->whereBelongsTo($this->workout)
             ->whereDate('performed_on', '<=', $this->performedOn)
             ->latest('performed_on')
             ->latest('id')
@@ -218,6 +217,19 @@ new #[Title('Log workout')] class extends Component {
                 'weight_unit' => $exercise->weight_unit?->value,
             ];
         })->all() ?? [];
+    }
+
+    private function ownedWorkout(?Workout $workout = null): Workout
+    {
+        $workout ??= $this->workout;
+
+        $ownedWorkout = Workout::query()
+            ->whereKey($workout->getKey())
+            ->whereHas('program', fn ($query) => $query->whereBelongsTo(Auth::user()))
+            ->first();
+        abort_unless($ownedWorkout, 404);
+
+        return $ownedWorkout;
     }
 
     public function addExercise(string $exerciseKey): void
@@ -269,6 +281,7 @@ new #[Title('Log workout')] class extends Component {
 
     public function createEntry(): void
     {
+        $workout = $this->ownedWorkout();
         $validated = $this->validate([
             'performedOn' => ['required', 'date', 'before_or_equal:today'],
             'notes' => ['nullable', 'string'],
@@ -281,9 +294,9 @@ new #[Title('Log workout')] class extends Component {
             'exercises.*.weight_unit' => ['nullable', 'in:kg,lbs'],
         ]);
 
-        $entry = DB::transaction(function () use ($validated): \App\Models\WorkoutEntry {
+        $entry = DB::transaction(function () use ($validated, $workout): \App\Models\WorkoutEntry {
             $entry = Auth::user()->workoutEntries()->create([
-                'workout_id' => $this->workout->id,
+                'workout_id' => $workout->id,
                 'performed_on' => $validated['performedOn'],
                 'notes' => $validated['notes'] ?: null,
             ]);
