@@ -133,11 +133,11 @@ test('a user can create a workout entry from the latest previous entry', functio
     Livewire::actingAs($user)->test('pages::workout-entries.create', ['workout' => $workout])
         ->assertSee('data-flux-date-picker')
         ->assertSet('exercises.0.exercise_name', 'Deadlift')
-        ->assertSet('exercises.0.sets.0.weight', '100.00')
+        ->assertSet('exercises.0.sets.0.weight', '100')
         ->assertSet('exercises.0.sets.2.reps', 4)
         ->call('addSet', 0)
         ->assertSet('exercises.0.sets.3.reps', 4)
-        ->assertSet('exercises.0.sets.3.weight', '105.00')
+        ->assertSet('exercises.0.sets.3.weight', '105')
         ->call('createEntry')
         ->assertRedirect();
 
@@ -189,7 +189,7 @@ test('a user can record barbell weight as standard plates per side', function ()
         ->assertSet('plateCalculatorCounts.25', 1)
         ->set('plateCalculatorCounts', ['45' => 1, '25' => 1, '5' => 1])
         ->call('applyPlateWeight')
-        ->assertSet('exercises.0.sets.0.weight', '195.00')
+        ->assertSet('exercises.0.sets.0.weight', '195')
         ->call('addSet', 0)
         ->set('exercises.0.sets.1.reps', 4)
         ->call('createEntry')
@@ -221,6 +221,28 @@ test('a user can record different reps and weight for each set', function () {
 
     expect($sets->map(fn ($set): array => [$set->reps, $set->weight])->all())
         ->toBe([[5, '100.00'], [3, '110.00']]);
+});
+
+test('a user can adjust reps and weight with the mobile number editor', function () {
+    $user = User::factory()->create(['timezone' => 'UTC']);
+    $program = $user->programs()->create(['name' => 'Strength']);
+    $workout = $program->workouts()->create(['label' => 'A', 'position' => 0]);
+
+    $component = Livewire::actingAs($user)->test('pages::workout-entries.create', ['workout' => $workout])
+        ->set('exerciseToAdd', 'deadlift')
+        ->call('addSet', 0)
+        ->set('exercises.0.sets.0.weight', '100.00');
+
+    $component->call('openMobileNumberEditor', 0, 0, 'reps')
+        ->assertSet('mobileEditorValue', '0')
+        ->call('incrementMobileNumber')
+        ->call('incrementMobileNumber')
+        ->call('applyMobileNumber')
+        ->assertSet('exercises.0.sets.0.reps', 2)
+        ->call('openMobileNumberEditor', 0, 0, 'weight')
+        ->call('incrementMobileNumber')
+        ->call('applyMobileNumber')
+        ->assertSet('exercises.0.sets.0.weight', '101');
 });
 
 test('users cannot access another users workout entries', function () {

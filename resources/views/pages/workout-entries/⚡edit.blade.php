@@ -15,12 +15,63 @@ new #[Title('Edit workout entry')] class extends Component {
     public ?int $plateCalculatorPosition = null;
     public ?int $plateCalculatorSetPosition = null;
     public string $plateCalculatorBarWeight = '';
+    public ?int $mobileEditorPosition = null;
+    public ?int $mobileEditorSetPosition = null;
+    public ?string $mobileEditorType = null;
+    public string $mobileEditorValue = '0';
 
     /** @var array<string, int> */
     public array $plateCalculatorCounts = [];
 
     /** @var array<int, array<string, mixed>> */
     public array $exercises = [];
+
+    public function openMobileNumberEditor(int $position, int $setPosition, string $type): void
+    {
+        if (! in_array($type, ['reps', 'weight'], true) || ! isset($this->exercises[$position]['sets'][$setPosition])) {
+            return;
+        }
+
+        $this->mobileEditorPosition = $position;
+        $this->mobileEditorSetPosition = $setPosition;
+        $this->mobileEditorType = $type;
+        $value = $this->exercises[$position]['sets'][$setPosition][$type] ?? null;
+        $this->mobileEditorValue = $type === 'weight'
+            ? number_format((float) ($value ?? 0), 0, '.', '')
+            : (string) ($value ?? 0);
+        $this->modal('mobile-number-editor')->show();
+    }
+
+    public function incrementMobileNumber(): void
+    {
+        $this->changeMobileNumber(1);
+    }
+
+    public function decrementMobileNumber(): void
+    {
+        $this->changeMobileNumber(-1);
+    }
+
+    private function changeMobileNumber(float $amount): void
+    {
+        $value = max(0, (float) $this->mobileEditorValue + $amount);
+        $this->mobileEditorValue = $this->mobileEditorType === 'weight'
+            ? number_format($value, 0, '.', '')
+            : (string) (int) $value;
+    }
+
+    public function applyMobileNumber(): void
+    {
+        if ($this->mobileEditorPosition === null || $this->mobileEditorSetPosition === null || ! in_array($this->mobileEditorType, ['reps', 'weight'], true)) {
+            return;
+        }
+
+        $value = (float) $this->mobileEditorValue;
+        $this->exercises[$this->mobileEditorPosition]['sets'][$this->mobileEditorSetPosition][$this->mobileEditorType] = $this->mobileEditorType === 'weight'
+            ? ($value > 0 ? (string) (int) $value : null)
+            : (int) $value;
+        $this->modal('mobile-number-editor')->close();
+    }
 
     public function plateOptions(string $unit): array
     {
@@ -122,7 +173,7 @@ new #[Title('Edit workout entry')] class extends Component {
         $plateWeight = collect($this->plateCalculatorCounts)
             ->sum(fn (int|string $count, string $plate): float => (float) str_replace('_', '.', $plate) * $count);
 
-        return number_format(((float) $this->plateCalculatorBarWeight) + ($plateWeight * 2), 2);
+        return number_format(((float) $this->plateCalculatorBarWeight) + ($plateWeight * 2), 0, '.', '');
     }
 
     public function applyPlateWeight(): void
@@ -153,7 +204,7 @@ new #[Title('Edit workout entry')] class extends Component {
             ]),
                 'sets' => $exercise->sets->map(fn ($set): array => [
                     'reps' => $set->reps,
-                    'weight' => $set->weight,
+                    'weight' => $set->weight === null ? null : (string) (int) $set->weight,
                 ])->all(),
                 'weight_unit' => $exercise->weight_unit?->value,
             ];
@@ -272,9 +323,31 @@ new #[Title('Edit workout entry')] class extends Component {
                     </div>
                     <div class="mt-4 flex flex-col gap-3">
                         @foreach ($exercise['sets'] as $setPosition => $set)
-                            <div wire:key="set-{{ $position }}-{{ $setPosition }}" class="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto] items-end gap-3">
-                                <flux:input wire:model="exercises.{{ $position }}.sets.{{ $setPosition }}.reps" type="number" min="0" label="Set {{ $setPosition + 1 }} reps" />
-                                <flux:input wire:model="exercises.{{ $position }}.sets.{{ $setPosition }}.weight" type="number" min="0.01" step="0.01" label="Weight" />
+                            <div wire:key="set-{{ $position }}-{{ $setPosition }}" class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-end gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
+                                <div class="hidden md:block">
+                                    <flux:input wire:model="exercises.{{ $position }}.sets.{{ $setPosition }}.reps" type="number" min="0" label="Set {{ $setPosition + 1 }} reps" />
+                                </div>
+                                <div class="hidden md:block">
+                                    <flux:input wire:model="exercises.{{ $position }}.sets.{{ $setPosition }}.weight" type="number" min="0.01" step="0.01" label="Weight" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 md:hidden">
+                                    <div class="grid gap-2">
+                                        <flux:label>Set {{ $setPosition + 1 }} reps</flux:label>
+                                        <flux:modal.trigger name="mobile-number-editor">
+                                            <button type="button" class="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-white px-3 text-left shadow-sm dark:border-zinc-700 dark:bg-zinc-900" wire:click="openMobileNumberEditor({{ $position }}, {{ $setPosition }}, 'reps')">
+                                            <span class="text-lg font-medium">{{ $set['reps'] }}</span>
+                                            </button>
+                                        </flux:modal.trigger>
+                                    </div>
+                                    <div class="grid gap-2">
+                                        <flux:label>Weight</flux:label>
+                                        <flux:modal.trigger name="mobile-number-editor">
+                                            <button type="button" class="flex h-10 w-full items-center rounded-lg border border-zinc-200 bg-white px-3 text-left shadow-sm dark:border-zinc-700 dark:bg-zinc-900" wire:click="openMobileNumberEditor({{ $position }}, {{ $setPosition }}, 'weight')">
+                                            <span class="text-lg font-medium">{{ number_format((float) ($set['weight'] ?? 0), 0) }}</span>
+                                            </button>
+                                        </flux:modal.trigger>
+                                    </div>
+                                </div>
                                 <flux:modal.trigger name="plate-calculator">
                                     <flux:button type="button" variant="ghost" square wire:click="openPlateCalculator({{ $position }}, {{ $setPosition }})" aria-label="Calculate plates">
                                         <flux:icon.circle-stack />
@@ -357,6 +430,21 @@ new #[Title('Edit workout entry')] class extends Component {
         <div class="flex justify-end gap-2">
             <flux:modal.close><flux:button variant="ghost">Cancel</flux:button></flux:modal.close>
             <flux:button type="button" variant="primary" wire:click="applyPlateWeight">Use this weight</flux:button>
+        </div>
+    </div>
+</flux:modal>
+
+<flux:modal name="mobile-number-editor" flyout position="bottom" variant="floating" class="md:hidden">
+    <div class="flex flex-col items-center gap-6 pb-2">
+        <flux:heading size="lg">{{ $mobileEditorType === 'weight' ? 'Weight' : 'Reps' }}</flux:heading>
+        <div class="text-7xl font-semibold tabular-nums tracking-tight">{{ $mobileEditorValue }}</div>
+        <div class="flex w-full items-center justify-center gap-5">
+            <flux:button type="button" variant="filled" class="size-16 text-3xl" wire:click="decrementMobileNumber" aria-label="Decrease number">-</flux:button>
+            <flux:button type="button" variant="filled" class="size-16 text-3xl" wire:click="incrementMobileNumber" aria-label="Increase number">+</flux:button>
+        </div>
+        <div class="flex w-full justify-end gap-2">
+            <flux:modal.close><flux:button variant="ghost">Cancel</flux:button></flux:modal.close>
+            <flux:button type="button" variant="primary" wire:click="applyMobileNumber">Done</flux:button>
         </div>
     </div>
 </flux:modal>
