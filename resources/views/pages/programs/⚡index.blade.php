@@ -64,16 +64,16 @@ new #[Title('Programs')] class extends Component {
         </div>
 
         @forelse ($this->programs as $program)
-            <div class="rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
+            <div class="program-card rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
                     <div class="grid grid-cols-[1fr_auto] items-center gap-5 lg:flex lg:flex-row lg:items-center lg:justify-between">
-                        <div>
+                        <div class="shrink-0">
                             <flux:heading>{{ $program->name }}</flux:heading>
                         </div>
                         @php($activity = $this->activityFor($program))
                         <div class="order-3 col-span-2 min-w-0 lg:order-none lg:flex-1">
                             <div class="flex justify-end gap-1.5 sm:gap-2" aria-label="Recent workout activity">
                                 @foreach ($activity as $day)
-                                    <div wire:key="activity-{{ $program->id }}-{{ $day['date']->toDateString() }}" class="hidden size-6 shrink-0 lg:flex">
+                                    <div wire:key="activity-{{ $program->id }}-{{ $day['date']->toDateString() }}" class="program-activity-wide size-6 shrink-0">
                                         @if ($day['entry'])
                                             <flux:tooltip class="size-6" content="Workout {{ $day['label'] }} on {{ $day['date']->format('M j, Y') }}">
                                                 <a href="{{ route('workout-entries.edit', $day['entry']) }}" wire:navigate class="flex size-6 shrink-0 justify-center" aria-label="Workout {{ $day['label'] }} on {{ $day['date']->format('M j, Y') }}" data-activity-date="{{ $day['date']->toDateString() }}">
@@ -88,7 +88,7 @@ new #[Title('Programs')] class extends Component {
                                     </div>
                                 @endforeach
                                 @foreach (array_slice($activity, -7) as $day)
-                                    <div wire:key="mobile-activity-{{ $program->id }}-{{ $day['date']->toDateString() }}" class="flex size-6 shrink-0 lg:hidden">
+                                    <div wire:key="mobile-activity-{{ $program->id }}-{{ $day['date']->toDateString() }}" class="program-activity-compact size-6 shrink-0">
                                         @if ($day['entry'])
                                             <flux:tooltip class="size-6" content="Workout {{ $day['label'] }} on {{ $day['date']->format('M j, Y') }}">
                                                 <a href="{{ route('workout-entries.edit', $day['entry']) }}" wire:navigate class="flex size-6 shrink-0 justify-center" aria-label="Workout {{ $day['label'] }} on {{ $day['date']->format('M j, Y') }}" data-activity-date="{{ $day['date']->toDateString() }}">
@@ -104,7 +104,7 @@ new #[Title('Programs')] class extends Component {
                                 @endforeach
                             </div>
                         </div>
-                        <div class="flex items-center justify-self-end gap-3 lg:gap-4">
+                        <div class="program-card-actions flex shrink-0 items-center justify-self-end gap-3 lg:gap-4">
                             <flux:text class="whitespace-nowrap font-medium">{{ $program->workouts->pluck('label')->join(' / ') }}</flux:text>
                             <div class="lg:hidden">
                                 <flux:button variant="primary" :href="route('workouts.index', $program)" wire:navigate square icon="eye" aria-label="View workouts" />

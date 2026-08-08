@@ -61,6 +61,38 @@ select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 
+.program-card {
+    container: program-card / inline-size;
+}
+
+.program-activity-wide {
+    display: none;
+}
+
+.program-activity-compact {
+    display: flex;
+}
+
+@media (min-width: 64rem) {
+    .program-activity-wide {
+        display: flex;
+    }
+
+    .program-activity-compact {
+        display: none;
+    }
+}
+
+@container program-card (max-width: 68.75rem) {
+    .program-activity-wide {
+        display: none;
+    }
+
+    .program-activity-compact {
+        display: flex;
+    }
+}
+
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */

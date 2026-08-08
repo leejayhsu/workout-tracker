@@ -81,6 +81,9 @@ test('a program shows recent workout activity', function () {
 
     Livewire::actingAs($user)->test('pages::programs.index')
         ->assertSee('aria-label="Recent workout activity"', escape: false)
+        ->assertSee('class="program-card', escape: false)
+        ->assertSee('program-activity-wide', escape: false)
+        ->assertSee('program-activity-compact', escape: false)
         ->assertSee('data-activity-date="2026-08-07"', escape: false)
         ->assertSee(route('workout-entries.edit', $entry, absolute: false))
         ->assertDontSee('data-activity-date="2026-07-10"', escape: false);
