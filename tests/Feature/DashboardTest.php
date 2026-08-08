@@ -32,7 +32,10 @@ test('the dashboard shows this months workouts and links to their entries', func
         ->assertOk()
         ->assertSee('August 2026')
         ->assertSee('data-workout-date="2026-08-05"', escape: false)
-        ->assertSee(route('workout-entries.edit', $entry, absolute: false));
+        ->assertSee(route('workout-entries.edit', $entry, absolute: false))
+        ->assertDontSee('Start with your plan')
+        ->assertDontSee('Your history stays yours')
+        ->assertDontSee('kg or lbs');
 });
 
 test('the dashboard does not show another users workouts', function () {
