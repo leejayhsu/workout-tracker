@@ -91,7 +91,7 @@ new #[Title('Workouts')] class extends Component {
 <section class="w-full">
     <div class="flex flex-col gap-8">
         <div>
-            <flux:button variant="ghost" :href="route('programs.index')" wire:navigate>Programs</flux:button>
+            <flux:button variant="ghost" :href="route('programs.index')" wire:navigate>Back to Programs</flux:button>
             <div class="mt-4 flex h-10 items-center">
                 @if ($editingProgram)
                     <form wire:submit="saveProgram" class="flex w-full max-w-xl items-center gap-2">
