@@ -88,7 +88,7 @@ new #[Title('Programs')] class extends Component {
                                     </div>
                                 @endforeach
                                 @foreach (array_slice($activity, -7) as $day)
-                                    <div wire:key="mobile-activity-{{ $program->id }}-{{ $day['date']->toDateString() }}" class="program-activity-compact size-6 shrink-0">
+                                    <div wire:key="compact-activity-{{ $program->id }}-{{ $day['date']->toDateString() }}" class="program-activity-compact size-6 shrink-0">
                                         @if ($day['entry'])
                                             <flux:tooltip class="size-6" content="Workout {{ $day['label'] }} on {{ $day['date']->format('M j, Y') }}">
                                                 <a href="{{ route('workout-entries.edit', $day['entry']) }}" wire:navigate class="flex size-6 shrink-0 justify-center" aria-label="Workout {{ $day['label'] }} on {{ $day['date']->format('M j, Y') }}" data-activity-date="{{ $day['date']->toDateString() }}">
@@ -107,10 +107,10 @@ new #[Title('Programs')] class extends Component {
                         <div class="program-card-actions flex shrink-0 items-center justify-self-end gap-3 lg:gap-4">
                             <flux:text class="whitespace-nowrap font-medium">{{ $program->workouts->pluck('label')->join(' / ') }}</flux:text>
                             <div class="lg:hidden">
-                                <flux:button variant="primary" :href="route('workouts.index', $program)" wire:navigate square icon="eye" aria-label="View workouts" />
+                                <flux:button variant="ghost" :href="route('workouts.index', $program)" wire:navigate square icon="eye" aria-label="View workouts" />
                             </div>
                             <div class="hidden lg:block">
-                                <flux:button variant="primary" :href="route('workouts.index', $program)" wire:navigate>View workouts</flux:button>
+                                <flux:button icon="eye" variant="ghost" square  :href="route('workouts.index', $program)" wire:navigate aria-label="View workouts"/>
                             </div>
                         </div>
                     </div>
