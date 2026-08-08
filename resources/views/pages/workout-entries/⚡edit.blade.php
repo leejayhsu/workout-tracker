@@ -68,12 +68,41 @@ new #[Title('Edit workout entry')] class extends Component {
         return $unit === WeightUnit::Lbs->value ? '45' : '20';
     }
 
+    /**
+     * @return array<string, int>
+     */
+    public function defaultPlateCounts(string $unit, float|int|string|null $weight): array
+    {
+        $barWeight = (float) $this->defaultBarWeight($unit);
+        $weight = (float) $weight;
+        $remainingPerSide = (int) round(($weight - $barWeight) * 100 / 2);
+        $counts = [];
+
+        if ($remainingPerSide <= 0) {
+            return $counts;
+        }
+
+        foreach ($this->plateOptions($unit) as $plateKey => $plate) {
+            $plateWeight = (int) round((float) $plate * 100);
+            $count = intdiv($remainingPerSide, $plateWeight);
+
+            if ($count > 0) {
+                $counts[$plateKey] = $count;
+                $remainingPerSide -= $plateWeight * $count;
+            }
+        }
+
+        return $counts;
+    }
+
     public function openPlateCalculator(int $position, int $setPosition): void
     {
         $this->plateCalculatorPosition = $position;
         $this->plateCalculatorSetPosition = $setPosition;
-        $this->plateCalculatorBarWeight = $this->defaultBarWeight((string) ($this->exercises[$position]['weight_unit'] ?? WeightUnit::Kg->value));
-        $this->plateCalculatorCounts = [];
+        $unit = (string) ($this->exercises[$position]['weight_unit'] ?? WeightUnit::Kg->value);
+        $weight = $this->exercises[$position]['sets'][$setPosition]['weight'] ?? null;
+        $this->plateCalculatorBarWeight = $this->defaultBarWeight($unit);
+        $this->plateCalculatorCounts = $this->defaultPlateCounts($unit, $weight);
         $this->modal('plate-calculator')->show();
     }
 
