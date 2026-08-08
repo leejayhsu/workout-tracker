@@ -359,11 +359,18 @@ new #[Title('Edit workout entry')] class extends Component {
                         <flux:button type="button" variant="ghost" wire:click="addSet({{ $position }})">Add set</flux:button>
                     </div>
                     <div class="mt-4 max-w-xs">
-                        <flux:select wire:model="exercises.{{ $position }}.weight_unit" label="Unit">
-                            @foreach (WeightUnit::cases() as $unit)
-                                <flux:select.option value="{{ $unit->value }}">{{ strtoupper($unit->value) }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
+                        <flux:field>
+                            <flux:label>Unit</flux:label>
+                            <flux:button.group class="w-fit">
+                                @foreach ([WeightUnit::Lbs, WeightUnit::Kg] as $unit)
+                                    <flux:button
+                                        type="button"
+                                        :variant="($exercises[$position]['weight_unit'] ?? WeightUnit::Kg->value) === $unit->value ? 'primary' : 'outline'"
+                                        wire:click="$set('exercises.{{ $position }}.weight_unit', '{{ $unit->value }}')"
+                                    >{{ strtoupper($unit->value) }}</flux:button>
+                                @endforeach
+                            </flux:button.group>
+                        </flux:field>
                     </div>
                 </div>
             @endforeach
