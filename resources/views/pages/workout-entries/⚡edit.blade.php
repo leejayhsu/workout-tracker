@@ -238,7 +238,7 @@ new #[Title('Edit workout entry')] class extends Component {
             'exercise_key' => $exercise->value,
             'exercise_name' => $exercise->label(),
             'position' => count($this->exercises),
-            'sets' => [],
+            'sets' => [['reps' => 0, 'weight' => null]],
             'weight_unit' => WeightUnit::Kg->value,
         ];
     }
@@ -393,7 +393,7 @@ new #[Title('Edit workout entry')] class extends Component {
             <div class="rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-600">
                 <flux:heading size="sm">Add exercise</flux:heading>
                 <div class="mt-3">
-                    <flux:select wire:model="exerciseToAdd" variant="listbox" searchable placeholder="Search exercises..." empty="No exercises found.">
+                    <flux:select wire:model.live="exerciseToAdd" variant="listbox" searchable placeholder="Search exercises..." empty="No exercises found.">
                         @foreach (Exercise::cases() as $exercise)
                             <flux:select.option wire:key="exercise-{{ $exercise->value }}" value="{{ $exercise->value }}">{{ $exercise->label() }}</flux:select.option>
                         @endforeach
