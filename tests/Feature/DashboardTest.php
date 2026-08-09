@@ -13,7 +13,7 @@ test('authenticated users can visit the dashboard', function () {
     $this->actingAs($user);
 
     $response = $this->get(route('dashboard'));
-    $response->assertOk();
+    $response->assertOk()->assertSee('Create program');
 });
 
 test('the dashboard shows this months workouts and links to their entries', function () {
@@ -30,6 +30,7 @@ test('the dashboard shows this months workouts and links to their entries', func
     $this->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
+        ->assertDontSee('Create program')
         ->assertSee('August 2026')
         ->assertSee('data-workout-date="2026-08-05"', escape: false)
         ->assertSee(route('workout-entries.edit', $entry, absolute: false))

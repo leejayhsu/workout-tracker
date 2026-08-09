@@ -11,6 +11,12 @@ use Livewire\Component;
 
 new #[Title('Dashboard')] class extends Component {
     #[Computed]
+    public function hasPrograms(): bool
+    {
+        return Auth::user()->programs()->exists();
+    }
+
+    #[Computed]
     public function month(): CarbonImmutable
     {
         return today(Auth::user()->timezone)->startOfMonth();
@@ -50,7 +56,9 @@ new #[Title('Dashboard')] class extends Component {
                 <flux:heading size="xl">Your training</flux:heading>
                 <flux:text class="mt-2">See your month at a glance and jump back into any workout.</flux:text>
             </div>
-            <flux:button variant="primary" :href="route('programs.create')" wire:navigate>Create program</flux:button>
+            @if (! $this->hasPrograms)
+                <flux:button variant="primary" :href="route('programs.create')" wire:navigate>Create program</flux:button>
+            @endif
         </div>
 
         <div class="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
