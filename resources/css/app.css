@@ -66,11 +66,11 @@ select:focus[data-flux-control] {
 }
 
 .program-activity-wide {
-    display: flex;
+    display: none;
 }
 
 .program-activity-compact {
-    display: none;
+    display: flex;
 }
 
 @media (min-width: 64rem) {
