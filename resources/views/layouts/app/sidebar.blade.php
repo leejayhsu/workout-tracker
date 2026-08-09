@@ -15,6 +15,11 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    @if (config('features.achievements'))
+                        <flux:sidebar.item icon="trophy" :href="route('achievements.index')" :current="request()->routeIs('achievements.*')" wire:navigate>
+                            {{ __('Achievements') }}
+                        </flux:sidebar.item>
+                    @endif
                     <flux:sidebar.item icon="clipboard-document-list" :href="route('programs.index')" :current="request()->routeIs('programs.*')" wire:navigate>
                         {{ __('Programs') }}
                     </flux:sidebar.item>
@@ -82,6 +87,8 @@
         </flux:header>
 
         {{ $slot }}
+
+        <x-achievements.unlocked-modal />
 
         @persist('toast')
             <flux:toast.group>
