@@ -14,6 +14,7 @@ new #[Title('Profile settings')] class extends Component {
 
     public string $name = '';
     public string $email = '';
+    public string $timezone = '';
 
     /**
      * Mount the component.
@@ -22,6 +23,7 @@ new #[Title('Profile settings')] class extends Component {
     {
         $this->name = Auth::user()->name;
         $this->email = Auth::user()->email;
+        $this->timezone = Auth::user()->timezone;
     }
 
     /**
@@ -42,6 +44,12 @@ new #[Title('Profile settings')] class extends Component {
         $user->save();
 
         Flux::toast(variant: 'success', text: __('Profile updated.'));
+    }
+
+    /** @return array<int, string> */
+    public function timezones(): array
+    {
+        return \DateTimeZone::listIdentifiers();
     }
 
     /**
@@ -81,7 +89,7 @@ new #[Title('Profile settings')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+        <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name, email address, and timezone')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
 
@@ -106,6 +114,12 @@ new #[Title('Profile settings')] class extends Component {
                     </div>
                 @endif
             </div>
+
+            <flux:select wire:model="timezone" :label="__('Timezone')" variant="listbox" searchable required>
+                @foreach ($this->timezones() as $timezone)
+                    <flux:select.option wire:key="timezone-{{ $timezone }}" value="{{ $timezone }}">{{ $timezone }}</flux:select.option>
+                @endforeach
+            </flux:select>
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">

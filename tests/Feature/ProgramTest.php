@@ -89,6 +89,23 @@ test('a program shows recent workout activity', function () {
         ->assertDontSee('data-activity-date="2026-07-10"', escape: false);
 });
 
+test('recent workout activity uses the users local timezone at the UTC date boundary', function () {
+    $this->travelTo(Carbon::parse('2026-08-09 01:00:00', 'UTC'));
+
+    $user = User::factory()->create(['timezone' => 'America/Los_Angeles']);
+    $program = $user->programs()->create(['name' => 'Strength']);
+    $workout = $program->workouts()->create(['label' => 'A', 'position' => 0]);
+    $entry = $user->workoutEntries()->create([
+        'workout_id' => $workout->id,
+        'performed_on' => '2026-08-08',
+    ]);
+
+    Livewire::actingAs($user)->test('pages::programs.index')
+        ->assertSee('data-activity-date="2026-08-08"', escape: false)
+        ->assertSee(route('workout-entries.edit', $entry, absolute: false))
+        ->assertDontSee('data-activity-date="2026-08-09"', escape: false);
+});
+
 test('a user can rename a program and its workouts without leaving the workouts page', function () {
     $user = User::factory()->create();
     $program = $user->programs()->create(['name' => 'Strength']);
