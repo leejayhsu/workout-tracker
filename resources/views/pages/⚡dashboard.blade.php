@@ -71,9 +71,9 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:badge color="blue" variant="solid" class="shrink-0">{{ $this->workoutEntries->count() }} {{ Str::plural('workout', $this->workoutEntries->count()) }}</flux:badge>
                 </div>
 
-                <div class="mt-6 min-w-0 overflow-x-auto">
+                <div class="mt-6 min-w-0">
                     <div class="sm:hidden">
-                        <flux:calendar static multiple size="lg" start-day="1" :value="$this->workoutDates" aria-label="Workout calendar" />
+                        <flux:calendar static multiple size="xs" start-day="1" :value="$this->workoutDates" aria-label="Workout calendar" />
                     </div>
                     <div class="hidden sm:block">
                         <flux:calendar static multiple size="2xl" start-day="1" :value="$this->workoutDates" aria-label="Workout calendar" />

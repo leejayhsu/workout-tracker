@@ -13,7 +13,11 @@ test('authenticated users can visit the dashboard', function () {
     $this->actingAs($user);
 
     $response = $this->get(route('dashboard'));
-    $response->assertOk()->assertSee('Create program');
+    $response
+        ->assertOk()
+        ->assertSee('Create program')
+        ->assertSee('size-10 sm:size-9', escape: false)
+        ->assertDontSee('overflow-x-auto', escape: false);
 });
 
 test('the dashboard shows this months workouts and links to their entries', function () {
