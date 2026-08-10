@@ -51,7 +51,7 @@ test('charts show the highest weight from each eligible workout entry', function
         ->assertSee('2026-08-05', escape: false);
 });
 
-test('charts exclude exercises with fewer than three recorded workout entries and other users data', function () {
+test('charts show exercises with fewer than three recorded workout entries without their trend', function () {
     $user = User::factory()->create();
     $workout = chartWorkoutFor($user);
     $otherUser = User::factory()->create();
@@ -66,8 +66,10 @@ test('charts exclude exercises with fewer than three recorded workout entries an
     $this->actingAs($user)
         ->get(route('charts.index'))
         ->assertOk()
-        ->assertSee('No charts yet')
-        ->assertDontSee('Deadlift')
+        ->assertSee('Deadlift')
+        ->assertSee('2 workout entries')
+        ->assertSee('Log 1 more entries of this exercise to see trends.')
+        ->assertDontSee('125 KG')
         ->assertDontSee('Private bench press');
 });
 
@@ -82,6 +84,7 @@ test('charts only include sets with at least one rep', function () {
     $this->actingAs($user)
         ->get(route('charts.index'))
         ->assertOk()
-        ->assertSee('No charts yet')
-        ->assertDontSee('Barbell row');
+        ->assertSee('Barbell row')
+        ->assertSee('2 workout entries')
+        ->assertSee('Log 1 more entries of this exercise to see trends.');
 });

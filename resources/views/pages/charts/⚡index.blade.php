@@ -64,7 +64,6 @@ new #[Title('Charts')] class extends Component {
                     'data' => $data,
                 ];
             })
-            ->filter(fn (array $chart): bool => $chart['entries'] >= 3)
             ->sortBy(['exerciseName', 'unit'])
             ->values();
     }
@@ -86,30 +85,38 @@ new #[Title('Charts')] class extends Component {
                             <flux:heading size="lg">{{ $chart['exerciseName'] }}</flux:heading>
                             <flux:text size="sm" class="mt-1">{{ $chart['entries'] }} workout entries</flux:text>
                         </div>
-                        <flux:badge color="blue" variant="solid" class="shrink-0">
-                            {{ Number::format($chart['highestWeight']) }} {{ Str::upper($chart['unit']) }}
-                        </flux:badge>
+                        @if ($chart['entries'] >= 3)
+                            <flux:badge color="blue" variant="solid" class="shrink-0">
+                                {{ Number::format($chart['highestWeight']) }} {{ Str::upper($chart['unit']) }}
+                            </flux:badge>
+                        @endif
                     </div>
 
-                    <flux:chart :value="$chart['data']" class="mt-6 aspect-[3/1]">
-                        <flux:chart.svg>
-                            <flux:chart.line field="highestWeight" class="text-blue-500 dark:text-blue-400" />
-                            <flux:chart.point field="highestWeight" class="text-blue-500 dark:text-blue-400" />
-                            <flux:chart.axis axis="x" field="date" :format="['month' => 'short', 'day' => 'numeric']">
-                                <flux:chart.axis.line />
-                                <flux:chart.axis.tick />
-                            </flux:chart.axis>
-                            <flux:chart.axis axis="y">
-                                <flux:chart.axis.grid />
-                                <flux:chart.axis.tick />
-                            </flux:chart.axis>
-                            <flux:chart.cursor />
-                        </flux:chart.svg>
-                        <flux:chart.tooltip>
-                            <flux:chart.tooltip.heading field="date" />
-                            <flux:chart.tooltip.value field="highestWeight" label="Highest weight" />
-                        </flux:chart.tooltip>
-                    </flux:chart>
+                    @if ($chart['entries'] >= 3)
+                        <flux:chart :value="$chart['data']" class="mt-6 aspect-[3/1]">
+                            <flux:chart.svg>
+                                <flux:chart.line field="highestWeight" class="text-blue-500 dark:text-blue-400" />
+                                <flux:chart.point field="highestWeight" class="text-blue-500 dark:text-blue-400" />
+                                <flux:chart.axis axis="x" field="date" :format="['month' => 'short', 'day' => 'numeric']">
+                                    <flux:chart.axis.line />
+                                    <flux:chart.axis.tick />
+                                </flux:chart.axis>
+                                <flux:chart.axis axis="y">
+                                    <flux:chart.axis.grid />
+                                    <flux:chart.axis.tick />
+                                </flux:chart.axis>
+                                <flux:chart.cursor />
+                            </flux:chart.svg>
+                            <flux:chart.tooltip>
+                                <flux:chart.tooltip.heading field="date" />
+                                <flux:chart.tooltip.value field="highestWeight" label="Highest weight" />
+                            </flux:chart.tooltip>
+                        </flux:chart>
+                    @else
+                        <div class="mt-6 flex aspect-[3/1] items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                            <flux:text class="text-center">Log {{ 3 - $chart['entries'] }} more entries of this exercise to see trends.</flux:text>
+                        </div>
+                    @endif
                 </div>
             @empty
                 <div class="rounded-2xl border border-dashed border-zinc-300 p-8 text-center xl:col-span-2 dark:border-zinc-600">
