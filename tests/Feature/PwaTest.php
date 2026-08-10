@@ -7,6 +7,8 @@ test('the authenticated app shell includes PWA metadata', function () {
         ->get(route('dashboard'))
         ->assertOk()
         ->assertSee('<meta name="apple-mobile-web-app-capable" content="yes">', escape: false)
+        ->assertSee('<link rel="icon" href="/favicon.svg" type="image/svg+xml">', escape: false)
+        ->assertDontSee('favicon.ico', escape: false)
         ->assertSee('<link rel="manifest" href="/manifest.webmanifest">', escape: false);
 });
 
