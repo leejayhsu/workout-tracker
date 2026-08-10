@@ -1,10 +1,10 @@
 #
-Create a square achievement icon for a workout tracker in a cute, flat cartoon sticker style.
+Create a square 1000x1000px achievement icon for a workout tracker in a cute, cartoon sticker style.
 
 Achievement: [ACHIEVEMENT]
 Milestone: [MILESTONE DESCRIPTION]
 
-Use one large, instantly recognizable central symbol that communicates the achievement clearly even when displayed at 50x50 pixels.
+Use one large, instantly recognizable central symbol that communicates the achievement clearly even when displayed at 100x100 pixels.
 
 ### Character and cuteness
 cute mascot-like proportions
@@ -24,7 +24,7 @@ charming and cuddly rather than athletic, muscular, or anatomically realistic
 preserve a clear silhouette; do not let limbs or accessories create visual clutter
 
 ### Eyes and face
-extremely simple, flat facial features
+extremely simple facial features
 small black oval or dot eyes
 one tiny solid-white highlight per eye at most
 no pupils, irises, inner rings, reflections, or glossy effects
@@ -36,7 +36,7 @@ facial features grouped tightly near the center of the face
 prioritize a sweet, calm expression over an excited expression
 
 ### Visual style
-flat vector-like cartoon mascot illustration
+vector-like cartoon mascot illustration
 cute, playful, and friendly
 bold, rounded geometric shapes
 thick, consistent dark navy outlines
@@ -53,7 +53,8 @@ no soft or cast shadows
 no glossy reflections
 no painterly texture, grain, or visible brushwork
 no fur, fabric, or surface texture
-no 3D, clay, inflatable, or rendered appearance
+no clay, inflatable, or rendered appearance
+3d or non frontal perspective is acceptable as long as simplicity is adhered to
 clean, crisp, antialiased edges
 strong contrast
 minimal internal detail
@@ -63,17 +64,17 @@ square 1:1 canvas
 one centered, dominant character or object
 subject fills approximately 75–85% of the canvas
 compact, balanced silhouette
-front-facing or near-front-facing view
+front-facing or maybe 3/4 view
 simple pose readable without small details
 important accessories must visibly connect to the character
 generous clear space around the complete sticker border
-immediately recognizable at 50×50 pixels
+immediately recognizable at 100x100 pixels
 no decorative frame, badge, medallion, or background shape
 no scenery or secondary objects unless essential to the achievement
 no human characters
 no text unless explicitly requested
 no logos or watermark
-transparent background
+IMPORTANT: background MUST be transparent
 
 ### Avoid
 tall or slender bodies
@@ -87,7 +88,6 @@ separated or floating accessories
 intricate fingers, fur, clothing folds, or tiny decorative details
 overly energetic poses that distort the silhouette
 
-If the achievement is number-based, include a large simple number beneath or integrated with the main object. Use a rounded white number with a thick dark navy outline and white sticker border.
 
 Keep the overall design playful, compact, and suitable for a consistent set of workout achievement icons.
 
