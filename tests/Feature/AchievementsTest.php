@@ -33,6 +33,8 @@ test('the achievements page renders the seeded catalog and a users unlocks', fun
         ->assertSee('Quarter Century')
         ->assertDontSee('Quarter Thousand')
         ->assertSee('data-flux-tooltip', escape: false)
+        ->assertSee('md:hidden', escape: false)
+        ->assertSee('hidden md:block', escape: false)
         ->assertSee('size-[100px]', escape: false)
         ->assertSee('grid-cols-[repeat(auto-fill,6.25rem)]', escape: false);
 });
