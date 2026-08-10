@@ -66,17 +66,17 @@ new #[Title('Dashboard')] class extends Component {
                 <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div>
                         <flux:heading size="lg">{{ $this->month->format('F Y') }}</flux:heading>
-                        <flux:text class="mt-1">A marked day means you trained.</flux:text>
+                        <flux:text class="mt-1">A red marker circle means you trained.</flux:text>
                     </div>
                     <flux:badge color="blue" variant="solid" class="shrink-0">{{ $this->workoutEntries->count() }} {{ Str::plural('workout', $this->workoutEntries->count()) }}</flux:badge>
                 </div>
 
                 <div class="mt-6 min-w-0">
                     <div class="sm:hidden">
-                        <flux:calendar static multiple size="xs" start-day="1" :value="$this->workoutDates" aria-label="Workout calendar" />
+                        <x-past-workouts-calendar static multiple size="xs" start-day="1" :value="$this->workoutDates" aria-label="Past workouts calendar" />
                     </div>
                     <div class="hidden sm:block">
-                        <flux:calendar static multiple size="2xl" start-day="1" :value="$this->workoutDates" aria-label="Workout calendar" />
+                        <x-past-workouts-calendar static multiple size="2xl" start-day="1" :value="$this->workoutDates" aria-label="Past workouts calendar" />
                     </div>
                 </div>
             </div>

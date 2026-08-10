@@ -36,6 +36,8 @@ test('the dashboard shows this months workouts and links to their entries', func
         ->assertOk()
         ->assertDontSee('Create program')
         ->assertSee('August 2026')
+        ->assertSee('Past workouts calendar')
+        ->assertSee('data-past-workout-marker', escape: false)
         ->assertSee('data-workout-date="2026-08-05"', escape: false)
         ->assertSee(route('workout-entries.edit', $entry, absolute: false))
         ->assertDontSee('Start with your plan')
