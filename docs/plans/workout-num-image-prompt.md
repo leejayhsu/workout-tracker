@@ -1,5 +1,11 @@
 #
-Create a square 1000x1000px achievement icon for a workout tracker in a cute, cartoon sticker style. make it an animal doing some kind of exercise. don't use a panda, dog, or rabbit, those are already taken.
+Create a square 1000x1000px achievement icon for a workout tracker in a cute, cartoon sticker style. make it an animal doing some kind of exercise.
+
+do not repeat previous animal + exercise pairs. the below are already used.
+- panda barbell (overhead press, or possibly the top of an olympic lift)
+- dog deadlift (bar on floor)
+- rabbit kettlebell (kettlebell on floor)
+- otter push up
 
 Milestone: [MILESTONE DESCRIPTION]
 
