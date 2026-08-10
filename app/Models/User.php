@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -47,6 +48,20 @@ class User extends Authenticatable implements PasskeyUser
     public function workoutEntries(): HasMany
     {
         return $this->hasMany(WorkoutEntry::class);
+    }
+
+    /** @return BelongsToMany<Achievement, $this> */
+    public function achievements(): BelongsToMany
+    {
+        return $this->belongsToMany(Achievement::class, 'user_achievements')
+            ->withPivot(['unlocked_at', 'announced_at'])
+            ->withTimestamps();
+    }
+
+    /** @return HasMany<UserAchievement, $this> */
+    public function userAchievements(): HasMany
+    {
+        return $this->hasMany(UserAchievement::class);
     }
 
     /**

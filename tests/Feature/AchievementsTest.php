@@ -1,29 +1,92 @@
 <?php
 
+use App\Achievements\AchievementEvaluator;
+use App\Actions\CreateWorkoutEntry;
+use App\Models\Achievement;
 use App\Models\User;
+use App\Models\Workout;
+use Database\Seeders\AchievementSeeder;
 use Livewire\Livewire;
 
-test('the achievements page renders configured workout-count thumbnails', function () {
+function workoutFor(User $user): Workout
+{
+    $program = $user->programs()->create(['name' => 'Strength']);
+
+    return $program->workouts()->create(['label' => 'A', 'position' => 0]);
+}
+
+test('the achievements page renders the seeded catalog and a users unlocks', function () {
+    $this->seed(AchievementSeeder::class);
     $user = User::factory()->create();
+    $firstAchievement = Achievement::query()->where('key', 'workout_entries.count.1')->firstOrFail();
+    $user->userAchievements()->create([
+        'achievement_id' => $firstAchievement->id,
+        'unlocked_at' => now(),
+    ]);
 
     Livewire::actingAs($user)->test('pages::achievements.index')
         ->assertOk()
-        ->assertSee(asset('images/achievements/workout-count/001-thumbnail.png'), escape: false)
+        ->assertSee(asset('images/achievements/workout-count/001-thumbnail-v2.png'), escape: false)
         ->assertSee(asset('images/achievements/workout-count/003-thumbnail.png'), escape: false)
-        ->assertSee(asset('images/achievements/workout-count/005-thumbnail.png'), escape: false)
-        ->assertSee(asset('images/achievements/workout-count/010-thumbnail.png'), escape: false)
-        ->assertSee(asset('images/achievements/workout-count/025-thumbnail.png'), escape: false)
-        ->assertSee(asset('images/achievements/workout-count/050-thumbnail.png'), escape: false)
-        ->assertSee(asset('images/achievements/workout-count/100-thumbnail.png'), escape: false)
-        ->assertSee(asset('images/achievements/workout-count/150-thumbnail.png'), escape: false)
-        ->assertSee(asset('images/achievements/workout-count/200-thumbnail.png'), escape: false)
-        ->assertSee('grid-cols-[repeat(auto-fill,4.6875rem)]', escape: false)
-        ->assertSee('sm:grid-cols-[repeat(auto-fill,6.25rem)]', escape: false)
-        ->assertSee('size-[75px]', escape: false)
-        ->assertSee('sm:size-[100px]', escape: false)
-        ->assertDontSee('rounded-xl text-sm font-bold', escape: false)
-        ->assertDontSee('w-64', escape: false)
-        ->assertSee('text-white', escape: false)
+        ->assertSee('1 of 10 unlocked')
+        ->assertSee('First Step')
         ->assertSee('Quarter Century')
-        ->assertDontSee('Twenty Strong');
+        ->assertDontSee('Quarter Thousand')
+        ->assertSee('grid-cols-[repeat(auto-fill,4.6875rem)]', escape: false)
+        ->assertSee('sm:grid-cols-[repeat(auto-fill,6.25rem)]', escape: false);
+});
+
+test('workout entry milestones award every eligible threshold without duplicates', function () {
+    $this->seed(AchievementSeeder::class);
+    $user = User::factory()->create();
+    $workout = workoutFor($user);
+
+    $user->workoutEntries()->createMany([
+        ['workout_id' => $workout->id, 'performed_on' => '2026-08-01'],
+        ['workout_id' => $workout->id, 'performed_on' => '2026-08-02'],
+        ['workout_id' => $workout->id, 'performed_on' => '2026-08-03'],
+    ]);
+
+    $evaluator = app(AchievementEvaluator::class);
+    $evaluator->evaluateWorkoutEntryMilestones($user);
+    $evaluator->evaluateWorkoutEntryMilestones($user);
+
+    expect($user->userAchievements()->count())->toBe(2)
+        ->and($user->achievements()->orderBy('key')->pluck('key')->all())->toBe([
+            'workout_entries.count.1',
+            'workout_entries.count.3',
+        ])
+        ->and($user->userAchievements()->whereNull('announced_at')->count())->toBe(2);
+});
+
+test('creating a workout entry awards the first milestone', function () {
+    $this->seed(AchievementSeeder::class);
+    $user = User::factory()->create();
+    $workout = workoutFor($user);
+
+    app(CreateWorkoutEntry::class)->handle($user, $workout, [
+        'performedOn' => '2026-08-01',
+        'notes' => null,
+        'exercises' => [],
+    ]);
+
+    expect($user->workoutEntries()->count())->toBe(1)
+        ->and($user->achievements()->orderBy('key')->pluck('key')->all())->toBe(['workout_entries.count.1']);
+});
+
+test('achievement backfills are silent and safe to rerun', function () {
+    $this->seed(AchievementSeeder::class);
+    $user = User::factory()->create();
+    $workout = workoutFor($user);
+    $user->workoutEntries()->createMany([
+        ['workout_id' => $workout->id, 'performed_on' => '2026-08-01'],
+        ['workout_id' => $workout->id, 'performed_on' => '2026-08-02'],
+        ['workout_id' => $workout->id, 'performed_on' => '2026-08-03'],
+    ]);
+
+    $this->artisan('achievements:backfill')->assertSuccessful();
+    $this->artisan('achievements:backfill')->assertSuccessful();
+
+    expect($user->userAchievements()->count())->toBe(2)
+        ->and($user->userAchievements()->whereNull('announced_at')->count())->toBe(0);
 });

@@ -1,11 +1,11 @@
 <?php
 
+use App\Actions\CreateWorkoutEntry;
 use App\Models\Workout;
 use App\Exercise;
 use App\WeightUnit;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -279,7 +279,7 @@ new #[Title('Log workout')] class extends Component {
         $this->exercises = array_values($this->exercises);
     }
 
-    public function createEntry(): void
+    public function createEntry(CreateWorkoutEntry $createWorkoutEntry): void
     {
         $workout = $this->ownedWorkout();
         $validated = $this->validate([
@@ -294,26 +294,7 @@ new #[Title('Log workout')] class extends Component {
             'exercises.*.weight_unit' => ['nullable', 'in:kg,lbs'],
         ]);
 
-        $entry = DB::transaction(function () use ($validated, $workout): \App\Models\WorkoutEntry {
-            $entry = Auth::user()->workoutEntries()->create([
-                'workout_id' => $workout->id,
-                'performed_on' => $validated['performedOn'],
-                'notes' => $validated['notes'] ?: null,
-            ]);
-
-            foreach ($validated['exercises'] as $position => $exercise) {
-                $sets = $exercise['sets'];
-                unset($exercise['sets']);
-                $entryExercise = $entry->exercises()->create([...$exercise, 'position' => $position]);
-                $entryExercise->sets()->createMany(array_map(
-                    fn (array $set, int $setPosition): array => [...$set, 'position' => $setPosition],
-                    $sets,
-                    array_keys($sets),
-                ));
-            }
-
-            return $entry;
-        });
+        $entry = $createWorkoutEntry->handle(Auth::user(), $workout, $validated);
 
         $this->redirect(route('workout-entries.edit', $entry, absolute: false), navigate: true);
     }

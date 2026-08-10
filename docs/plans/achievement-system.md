@@ -10,7 +10,7 @@ Initial workout-entry achievements:
 - 25 entries
 - Every 25 entries after that, initially through 250
 
-Achievements are permanent once unlocked. Deleting an entry does not revoke an achievement. Existing users will be backfilled silently when the feature launches.
+Achievements are permanent once unlocked. Deleting an entry does not revoke an achievement. Existing users will be backfilled silently when the feature launches via an Artisan command run in Laravel Cloud.
 
 ## Evaluation
 
@@ -204,7 +204,7 @@ The command should:
 - Avoid modal/session announcements.
 - Be safe to rerun.
 
-Do not run the backfill inside a schema migration.
+Always use this Artisan command for achievement backfills, including the initial production rollout. Do not run a backfill inside a schema migration or automatically during local development; it is unnecessary locally and should be run explicitly in Laravel Cloud when needed.
 
 ## Testing
 
