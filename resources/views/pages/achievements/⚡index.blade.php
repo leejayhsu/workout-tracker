@@ -35,14 +35,14 @@ new #[Title('Achievements')] class extends Component {
             </flux:badge>
         </div>
 
-        <div class="grid grid-cols-[repeat(auto-fill,4.6875rem)] gap-3 sm:grid-cols-[repeat(auto-fill,6.25rem)]" aria-label="Achievement milestones">
+        <div class="grid grid-cols-[repeat(auto-fill,6.25rem)] gap-3" aria-label="Achievement milestones">
             @foreach ($achievements as $achievement)
                 @php($unlockedOn = $achievement->userAchievements->first()?->unlocked_at)
-                <flux:tooltip wire:key="achievement-{{ $achievement->key }}">
+                <flux:tooltip toggleable wire:key="achievement-{{ $achievement->key }}">
                     <button
                         type="button"
                         @class([
-                            'flex size-[75px] items-center justify-center rounded-xl border transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:size-[100px] dark:focus:ring-offset-zinc-800',
+                            'flex size-[100px] items-center justify-center rounded-xl border transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-800',
                             'border-amber-500 bg-amber-400 text-amber-950 shadow-sm shadow-amber-400/40' => $unlockedOn,
                             'border-zinc-300 bg-zinc-100 text-zinc-400 hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500 dark:hover:border-zinc-600' => ! $unlockedOn,
                         ])

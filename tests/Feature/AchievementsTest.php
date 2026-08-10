@@ -32,8 +32,9 @@ test('the achievements page renders the seeded catalog and a users unlocks', fun
         ->assertSee('First Step')
         ->assertSee('Quarter Century')
         ->assertDontSee('Quarter Thousand')
-        ->assertSee('grid-cols-[repeat(auto-fill,4.6875rem)]', escape: false)
-        ->assertSee('sm:grid-cols-[repeat(auto-fill,6.25rem)]', escape: false);
+        ->assertSee('data-flux-tooltip', escape: false)
+        ->assertSee('size-[100px]', escape: false)
+        ->assertSee('grid-cols-[repeat(auto-fill,6.25rem)]', escape: false);
 });
 
 test('workout entry milestones award every eligible threshold without duplicates', function () {
