@@ -15,6 +15,9 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="chart-bar" :href="route('charts.index')" :current="request()->routeIs('charts.*')" wire:navigate>
+                        {{ __('Charts') }}
+                    </flux:sidebar.item>
                     @if (config('features.achievements'))
                         <flux:sidebar.item icon="trophy" :href="route('achievements.index')" :current="request()->routeIs('achievements.*')" wire:navigate>
                             {{ __('Achievements') }}

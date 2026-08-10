@@ -7,6 +7,7 @@ Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('dashboard', 'pages::dashboard')->name('dashboard');
+    Route::livewire('charts', 'pages::charts.index')->name('charts.index');
     if (config('features.achievements')) {
         Route::livewire('achievements', 'pages::achievements.index')->name('achievements.index');
     }
