@@ -16,12 +16,20 @@ SPEC.loader.exec_module(generator)
 
 
 class GenerateBarbellV2Test(unittest.TestCase):
-    def test_builds_an_svg_with_black_and_white_sticker_strokes(self) -> None:
-        svg = generator.build_number_svg("12", 400, "Arial")
+    def test_uses_the_sticker_number_generator(self) -> None:
+        self.assertEqual(generator.NUMBER_GENERATOR, Path("docs/sticker-number.py").resolve())
 
-        self.assertIn('fill="white" stroke="black"', svg)
-        self.assertIn('fill="white" stroke="white"', svg)
-        self.assertIn('font-weight="900"', svg)
+    def test_renders_a_proportionally_sized_sticker_number(self) -> None:
+        number = generator.render_number(3, 400)
+
+        self.assertLessEqual(number.width, 100)
+        self.assertLessEqual(number.height, 150)
+
+    def test_generates_a_three_digit_sticker_number(self) -> None:
+        number = generator.render_number(200, 400)
+
+        self.assertLessEqual(number.width, 100)
+        self.assertLessEqual(number.height, 150)
 
     def test_generates_a_square_png_with_the_requested_background(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -31,7 +39,7 @@ class GenerateBarbellV2Test(unittest.TestCase):
                 output,
                 100,
                 generator.parse_color("#123456"),
-                "12",
+                3,
             )
 
             with Image.open(output) as image:
@@ -47,7 +55,7 @@ class GenerateBarbellV2Test(unittest.TestCase):
                 output,
                 100,
                 None,
-                "3",
+                3,
             )
 
             with Image.open(output) as image:

@@ -9,7 +9,6 @@ Example:
 from __future__ import annotations
 
 import argparse
-import html
 import subprocess
 import tempfile
 from pathlib import Path
@@ -18,7 +17,11 @@ from PIL import Image
 
 
 DEFAULT_SOURCE = Path(__file__).resolve().parents[1] / "docs" / "bbell2_cropped.png"
+NUMBER_GENERATOR = Path(__file__).resolve().parents[1] / "docs" / "sticker-number.py"
 SUPERSAMPLE = 4
+NUMBER_WIDTH_RATIO = 0.22
+NUMBER_VIEWBOX_WIDTH = 108
+NUMBER_VIEWBOX_HEIGHT = 155
 
 
 def parse_color(value: str) -> tuple[int, int, int, int] | None:
@@ -40,29 +43,29 @@ def parse_color(value: str) -> tuple[int, int, int, int] | None:
         raise argparse.ArgumentTypeError("colors must use hexadecimal digits") from error
 
 
-def build_number_svg(number: str, canvas_size: int, font_family: str) -> str:
-    """Build the SVG for a white number with black and white sticker outlines."""
-    font_size = int(canvas_size * 0.29)
-    black_stroke_width = max(8, canvas_size // 52)
-    white_stroke_width = black_stroke_width * 3
-    text = html.escape(number)
-    center = canvas_size // 2
-    baseline = int(center + font_size * 0.35)
-
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{canvas_size}" height="{canvas_size}" viewBox="0 0 {canvas_size} {canvas_size}">
-  <text x="{center}" y="{baseline}" text-anchor="middle" font-family="{html.escape(font_family)}" font-size="{font_size}" font-weight="900" fill="white" stroke="white" stroke-width="{white_stroke_width}" stroke-linejoin="round" paint-order="stroke">{text}</text>
-  <text x="{center}" y="{baseline}" text-anchor="middle" font-family="{html.escape(font_family)}" font-size="{font_size}" font-weight="900" fill="white" stroke="black" stroke-width="{black_stroke_width}" stroke-linejoin="round" paint-order="stroke">{text}</text>
-</svg>'''
-
-
-def render_number(number: str, canvas_size: int, font_family: str) -> Image.Image:
+def render_number(number: int, canvas_size: int) -> Image.Image:
     """Rasterize a tightly cropped SVG number image using macOS's SVG renderer."""
     with tempfile.TemporaryDirectory() as directory:
         svg = Path(directory) / "number.svg"
         png = Path(directory) / "number.png"
-        svg.write_text(build_number_svg(number, canvas_size, font_family), encoding="utf-8")
+        width = round(canvas_size * NUMBER_WIDTH_RATIO)
+        height = round(width * NUMBER_VIEWBOX_HEIGHT / NUMBER_VIEWBOX_WIDTH)
 
         try:
+            subprocess.run(
+                ["python3", str(NUMBER_GENERATOR), "--number", str(number), "--output", str(svg)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            svg.write_text(
+                svg.read_text(encoding="utf-8").replace(
+                    '<svg xmlns="http://www.w3.org/2000/svg"',
+                    f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"',
+                    1,
+                ),
+                encoding="utf-8",
+            )
             subprocess.run(
                 ["sips", "-s", "format", "png", str(svg), "--out", str(png)],
                 check=True,
@@ -87,19 +90,18 @@ def generate_image(
     output: Path,
     size: int,
     background: tuple[int, int, int, int] | None,
-    number: str,
-    font_family: str = ".SF Rounded Numeric, Arial Rounded MT Bold, Arial, sans-serif",
+    number: int,
 ) -> None:
     """Render a centered barbell and SVG sticker number in a square PNG."""
     if size < 1:
         raise ValueError("size must be at least 1")
-    if not number:
-        raise ValueError("number cannot be empty")
+    if number <= 0:
+        raise ValueError("number must be greater than zero")
 
     render_size = size * SUPERSAMPLE
     barbell = Image.open(source).convert("RGBA")
     barbell.thumbnail((int(render_size * 0.96), render_size), Image.Resampling.LANCZOS)
-    number_image = render_number(number, render_size, font_family)
+    number_image = render_number(number, render_size)
     gap = max(4, round(render_size * 0.10))
     group_height = barbell.height + gap + number_image.height
     group_top = (render_size - group_height) // 2
@@ -120,9 +122,8 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True, help="destination PNG path")
     parser.add_argument("--size", type=int, default=400, help="square image dimension in pixels")
     parser.add_argument("--background", type=parse_color, default=None, help="hex color or transparent")
-    parser.add_argument("--number", default="1", help="text to display below the barbell")
+    parser.add_argument("--number", type=int, default=1, help="positive number to display below the barbell")
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE, help="source barbell PNG")
-    parser.add_argument("--font-family", default=".SF Rounded Numeric, Arial Rounded MT Bold, Arial, sans-serif")
     args = parser.parse_args()
 
     generate_image(
@@ -131,7 +132,6 @@ def main() -> None:
         args.size,
         args.background,
         args.number,
-        args.font_family,
     )
 
 

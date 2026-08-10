@@ -6,37 +6,86 @@ Milestone: [MILESTONE DESCRIPTION]
 
 Use one large, instantly recognizable central symbol that communicates the achievement clearly even when displayed at 50x50 pixels.
 
-Visual style:
-- flat vector-like cartoon illustration
-- cute and friendly, not realistic
-- bold rounded shapes
-- thick dark navy outlines
-- thick white sticker-style outer border
-- limited color palette
-- solid color fills only
-- hard-edged flat shadow or highlight regions are allowed
-- absolutely no gradients
-- no transparency-based shading
-- no glow
-- no soft shadows
-- no glossy reflections
-- no painterly texture
-- no 3D or clay-like rendering
-- clean, crisp edges
-- strong contrast
-- minimal detail
-- generous negative space
+### Character and cuteness
+cute mascot-like proportions
+plump, compact, slightly squashed body
+oversized round head
+head approximately 45–55% of the character’s total height
+short, thick, stubby limbs
+tiny rounded hands and feet
+full rounded cheeks
+small facial features grouped near the center of the face
+large friendly eyes with simple highlights
+tiny nose and small cheerful mouth
+joyful, innocent expression
+soft curves throughout; avoid sharp corners and angular anatomy
+slightly exaggerated proportions, but not baby-realistic
+charming and cuddly rather than athletic, muscular, or anatomically realistic
+preserve a clear silhouette; do not let limbs or accessories create visual clutter
 
-Composition:
-- square 1:1 canvas
-- centered composition
-- one dominant object
-- large simple silhouette
-- readable at thumbnail size
-- no decorative frame or badge shape
-- no people
-- no logos or watermark
-- transparent background
+### Eyes and face
+extremely simple, flat facial features
+small black oval or dot eyes
+one tiny solid-white highlight per eye at most
+no pupils, irises, inner rings, reflections, or glossy effects
+no outlines inside the eyes
+eyes placed relatively low and close together
+tiny nose positioned close beneath the eyes
+small, simple smiling mouth
+facial features grouped tightly near the center of the face
+prioritize a sweet, calm expression over an excited expression
+
+### Visual style
+flat vector-like cartoon mascot illustration
+cute, playful, and friendly
+bold, rounded geometric shapes
+thick, consistent dark navy outlines
+thick white sticker border surrounding the entire combined silhouette
+sticker border should not appear between touching parts of the subject
+limited palette of approximately 3–5 colors
+large, uninterrupted areas of solid color
+solid color fills only
+optional highlights or shadows must be simple, hard-edged color shapes
+absolutely no gradients or gradual color transitions
+no transparency-based shading
+no glow or bloom
+no soft or cast shadows
+no glossy reflections
+no painterly texture, grain, or visible brushwork
+no fur, fabric, or surface texture
+no 3D, clay, inflatable, or rendered appearance
+clean, crisp, antialiased edges
+strong contrast
+minimal internal detail
+
+### Composition
+square 1:1 canvas
+one centered, dominant character or object
+subject fills approximately 75–85% of the canvas
+compact, balanced silhouette
+front-facing or near-front-facing view
+simple pose readable without small details
+important accessories must visibly connect to the character
+generous clear space around the complete sticker border
+immediately recognizable at 50×50 pixels
+no decorative frame, badge, medallion, or background shape
+no scenery or secondary objects unless essential to the achievement
+no human characters
+no text unless explicitly requested
+no logos or watermark
+transparent background
+
+### Avoid
+tall or slender bodies
+long arms or legs
+realistic anatomy
+muscular proportions
+small head with a large torso
+narrow or angular faces
+excessive eye detail
+separated or floating accessories
+intricate fingers, fur, clothing folds, or tiny decorative details
+overly energetic poses that distort the silhouette
 
 If the achievement is number-based, include a large simple number beneath or integrated with the main object. Use a rounded white number with a thick dark navy outline and white sticker border.
 

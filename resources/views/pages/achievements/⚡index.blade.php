@@ -10,19 +10,15 @@ new #[Title('Achievements')] class extends Component {
     public function achievements(): array
     {
         return [
-            ['threshold' => 1, 'name' => 'First Step', 'description' => 'Complete your first workout entry.', 'thumbnail_path' => 'images/achievements/workout-count/001-thumbnail.png', 'unlocked_on' => 'Aug 1, 2026', 'is_secret' => false],
+            ['threshold' => 1, 'name' => 'First Step', 'description' => 'Complete your first workout entry.', 'thumbnail_path' => 'images/achievements/workout-count/001-thumbnail-v2.png', 'unlocked_on' => 'Aug 1, 2026', 'is_secret' => false],
             ['threshold' => 3, 'name' => 'Finding Your Rhythm', 'description' => 'Complete 3 workout entries.', 'thumbnail_path' => 'images/achievements/workout-count/003-thumbnail.png', 'unlocked_on' => 'Aug 4, 2026', 'is_secret' => false],
             ['threshold' => 5, 'name' => 'Five Strong', 'description' => 'Complete 5 workout entries.', 'thumbnail_path' => 'images/achievements/workout-count/005-thumbnail.png', 'unlocked_on' => 'Aug 7, 2026', 'is_secret' => false],
             ['threshold' => 10, 'name' => 'Double Digits', 'description' => 'Complete 10 workout entries.', 'thumbnail_path' => 'images/achievements/workout-count/010-thumbnail.png', 'unlocked_on' => null, 'is_secret' => false],
-            ['threshold' => 20, 'name' => 'Twenty Strong', 'description' => 'Complete 20 workout entries.', 'thumbnail_path' => 'images/achievements/workout-count/020-thumbnail.png', 'unlocked_on' => null, 'is_secret' => false],
-            ['threshold' => 50, 'name' => 'Half Century', 'description' => 'Complete 50 workout entries.', 'thumbnail_path' => null, 'unlocked_on' => null, 'is_secret' => false],
-            ['threshold' => 75, 'name' => 'Steady Work', 'description' => 'Complete 75 workout entries.', 'thumbnail_path' => null, 'unlocked_on' => null, 'is_secret' => false],
-            ['threshold' => 100, 'name' => 'Centurion', 'description' => 'Complete 100 workout entries.', 'thumbnail_path' => null, 'unlocked_on' => null, 'is_secret' => false],
-            ['threshold' => 125, 'name' => 'Iron Resolve', 'description' => 'Complete 125 workout entries.', 'thumbnail_path' => null, 'unlocked_on' => null, 'is_secret' => false],
-            ['threshold' => 150, 'name' => 'Work Ethic', 'description' => 'Complete 150 workout entries.', 'thumbnail_path' => null, 'unlocked_on' => null, 'is_secret' => false],
-            ['threshold' => 175, 'name' => 'Committed', 'description' => 'Complete 175 workout entries.', 'thumbnail_path' => null, 'unlocked_on' => null, 'is_secret' => false],
-            ['threshold' => 200, 'name' => 'Two Hundred Club', 'description' => 'Complete 200 workout entries.', 'thumbnail_path' => null, 'unlocked_on' => null, 'is_secret' => false],
-            ['threshold' => 225, 'name' => 'Unstoppable', 'description' => 'Complete 225 workout entries.', 'thumbnail_path' => null, 'unlocked_on' => null, 'is_secret' => false],
+            ['threshold' => 25, 'name' => 'Quarter Century', 'description' => 'Complete 25 workout entries.', 'thumbnail_path' => 'images/achievements/workout-count/025-thumbnail.png', 'unlocked_on' => null, 'is_secret' => false],
+            ['threshold' => 50, 'name' => 'Half Century', 'description' => 'Complete 50 workout entries.', 'thumbnail_path' => 'images/achievements/workout-count/050-thumbnail.png', 'unlocked_on' => null, 'is_secret' => false],
+            ['threshold' => 100, 'name' => 'Centurion', 'description' => 'Complete 100 workout entries.', 'thumbnail_path' => 'images/achievements/workout-count/100-thumbnail.png', 'unlocked_on' => null, 'is_secret' => false],
+            ['threshold' => 150, 'name' => 'Work Ethic', 'description' => 'Complete 150 workout entries.', 'thumbnail_path' => 'images/achievements/workout-count/150-thumbnail.png', 'unlocked_on' => null, 'is_secret' => false],
+            ['threshold' => 200, 'name' => 'Two Hundred Club', 'description' => 'Complete 200 workout entries.', 'thumbnail_path' => 'images/achievements/workout-count/200-thumbnail.png', 'unlocked_on' => null, 'is_secret' => false],
             ['threshold' => 250, 'name' => 'Quarter Thousand', 'description' => 'Complete 250 workout entries.', 'thumbnail_path' => null, 'unlocked_on' => null, 'is_secret' => true],
         ];
     }
@@ -70,7 +66,7 @@ new #[Title('Achievements')] class extends Component {
                         @endif
                     </button>
 
-                    <flux:tooltip.content class="w-64">
+                    <flux:tooltip.content>
                         @if ($achievement['is_secret'] && ! $achievement['unlocked_on'])
                             <div class="flex gap-3">
                                 <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
@@ -83,13 +79,8 @@ new #[Title('Achievements')] class extends Component {
                             </div>
                         @else
                             <div class="flex gap-3">
-                                <div @class([
-                                    'flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold',
-                                    'bg-amber-400 text-amber-950' => $achievement['unlocked_on'],
-                                    'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400' => ! $achievement['unlocked_on'],
-                                ])>{{ $achievement['threshold'] }}</div>
                                 <div>
-                                    <flux:heading size="sm">{{ $achievement['name'] }}</flux:heading>
+                                    <flux:heading size="sm" class="text-white">{{ $achievement['name'] }}</flux:heading>
                                     <flux:text size="sm" class="mt-1">{{ $achievement['description'] }}</flux:text>
                                     @if ($achievement['unlocked_on'])
                                         <flux:text size="sm" class="mt-3 font-medium text-amber-700 dark:text-amber-300">Unlocked {{ $achievement['unlocked_on'] }}</flux:text>
